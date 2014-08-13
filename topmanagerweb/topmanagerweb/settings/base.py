@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# topmanagerweb/settings/base.py
+
 """Common settings and globals."""
 
 

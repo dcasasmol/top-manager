@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# topmanagerweb/wsgi.py
+
 """
 WSGI config for topmanagerweb project.
 

@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
+# topmanagerweb/settings/local.py
+
 """Development settings and globals."""
+
 
 from __future__ import absolute_import
 

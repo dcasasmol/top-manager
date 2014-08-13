@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# topmanagerweb/urls.py
+
 from django.conf.urls import patterns, include, url
 from django.conf.urls.static import static
 from django.conf import settings
