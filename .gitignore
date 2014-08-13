@@ -37,6 +37,18 @@ coverage.xml
 # Translations
 *.mo
 
+# Linux Editors
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.elc
+auto-save-list
+tramp
+.\#*
+*.swp
+*.swo
+
 # Mr Developer
 .mr.developer.cfg
 .project
