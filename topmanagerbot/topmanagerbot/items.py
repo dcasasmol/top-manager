@@ -14,14 +14,27 @@ from scrapy import Item, Field
 #     # Fields for this item are automatically created from the Django model
 #     django_model = Footballer
 
-class CountryItem(Item):
+class Country(Item):
     name = Field()
     flag_slug = Field()
 
 
-class LeagueItem(Item):
+class League(Item):
     name = Field()
     transfermarkt_slug = Field()
     logo_slug = Field()
     country = Field()
 
+
+class Club(Item):
+    name = Field()
+    transfermarkt_slug = Field()
+    logo_slug = Field()
+    country = Field()
+    league = Field()
+    stadium = Field()
+    seats_number = Field()
+
+
+class Footballer(Item):
+    pass

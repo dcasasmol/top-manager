@@ -28,11 +28,11 @@ class TransfermarktSpider(scrapy.Spider):
     def parse(self, response):
 
         # Gets country info.
-        country = items.CountryItem(self.get_country_info(response))
+        country = items.Country(self.get_country_info(response))
         yield country
 
         # Gets league info.
-        league = items.LeagueItem(self.get_league_info(response))
+        league = items.League(self.get_league_info(response))
         league['country'] = country['name']
         yield league
 
