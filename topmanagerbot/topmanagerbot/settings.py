@@ -12,6 +12,28 @@ import os
 import sys
 
 
+########## CRAWLER CONFIGURATION
+BOT_NAME = 'topmanagerbot'
+
+TM_HOST_NAME = 'transfermarkt.com'
+
+TM_LEAGUES = [
+    '/primera-division/startseite/wettbewerb/ES1',
+]
+
+DEFAULT_NA = 'N/A'
+
+SPIDER_MODULES = ['topmanagerbot.spiders']
+NEWSPIDER_MODULE = 'topmanagerbot.spiders'
+
+ITEM_PIPELINES = {
+    'topmanagerbot.pipelines.TopmanagerbotPipeline': 100,
+}
+
+# Crawl responsibly by identifying yourself (and your website) on the user-agent
+USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0'
+########## END CRAWLER CONFIGURATION
+
 ########## DJANGO CONFIGURATION
 # Setting up Django's project full path
 DJANGO_PROJECT_PATH = '/home/dcasas/projects/top-manager.es/topmanagerweb'
@@ -21,14 +43,3 @@ sys.path.insert(0, DJANGO_PROJECT_PATH)
 # /home/dcasas/projects/top-manager.es/topmanagerweb/topmanagerweb/settings/local.py
 os.environ['DJANGO_SETTINGS_MODULE'] = 'topmanagerweb.settings.local'
 ########## END DJANGO CONFIGURATION
-
-########## CRAWLER CONFIGURATION
-BOT_NAME = 'topmanagerbot'
-
-SPIDER_MODULES = ['topmanagerbot.spiders']
-NEWSPIDER_MODULE = 'topmanagerbot.spiders'
-
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'topmanagerbot (+http://www.yourdomain.com)'
-USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0'
-########## END CRAWLER CONFIGURATION
