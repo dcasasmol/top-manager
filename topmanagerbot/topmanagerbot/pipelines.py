@@ -11,16 +11,16 @@ class TopmanagerbotPipeline(object):
 
     def process_item(self, item, spider):
 
-        if isinstance(item, Footballer):
+        if isinstance(item, items.Footballer):
             return self.storeFootballer(item, spider)
 
-        elif isinstance(item, Country):
+        elif isinstance(item, items.Country):
             return self.storeCountry(item, spider)
 
-        elif isinstance(item, Club):
+        elif isinstance(item, items.Club):
             return self.storeClub(item, spider)
 
-        elif isinstance(item, League):
+        elif isinstance(item, items.League):
             return self.storeLeague(item, spider)
 
 

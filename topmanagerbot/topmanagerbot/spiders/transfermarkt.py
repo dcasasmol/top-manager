@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 # topmanagerbot/spiders/transfermarkt.py
 
+#TODO
+# get all footballer info
+# pedir confirmacion de los cambios raros
+# delete duplicates
+# manage cesions
+# saves items in django database
+# info counters
+# not save league/club by name, do it by id
+# not save url image, download it and save it
+
 import os
 import scrapy
 
@@ -19,7 +29,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         for one_league in settings.TM_LEAGUES:
 
-            league_url = self.build_transfermarkt_url(one_league)
+            league_url = self.build_tm_url(one_league)
             self.start_urls = self.start_urls + ( league_url, )
 
         super(TransfermarktSpider, self).__init__()
@@ -29,23 +39,74 @@ class TransfermarktSpider(scrapy.Spider):
 
         # Gets country info.
         country = items.Country(self.get_country_info(response))
+
         yield country
 
         # Gets league info.
         league = items.League(self.get_league_info(response))
         league['country'] = country['name']
+
         yield league
 
         # Gets clubs links and proccess them.
-        clubs_links = self.get_clubs_links(response)
+        clubs_links = self.get_tm_links(response)
+
+        meta = {
+            'league': league['name'],
+        }
+
         for one_club in clubs_links:
 
-          club_url = self.build_transfermarkt_url(one_club)
-          yield scrapy.Request(url=club_url, callback=self.parse_club)
+          club_url = self.build_tm_url(one_club)
+          yield scrapy.Request(url=club_url, meta=meta, callback=self.parse_club)
 
 
     def parse_club(self, response):
-        pass
+
+        meta = response.meta
+
+        # Gets country info.
+        country = items.Country(self.get_country_info(response))
+
+        yield country
+
+        # Gets club info.
+        club = items.Club(self.get_club_info(response))
+        club['country'] = country['name']
+        club['league'] = meta.get('league', settings.DEFAULT_NA)
+
+        yield club
+
+        # Gets footballers links and proccess them.
+        footballers_links = self.get_tm_links(response)
+
+        meta = {
+            'club': club['name'],
+        }
+
+        for one_footballer in footballers_links:
+
+          footballer_url = self.build_tm_url(one_footballer)
+          yield scrapy.Request(url=footballer_url, meta=meta, callback=self.parse_footballer)
+
+
+    def parse_footballer(self, response):
+
+        meta = response.meta
+
+        # Gets country info.
+        nationalities = self.get_footballer_nationalities(response)
+        for one_nationality in nationalities:
+            country = items.Country(one_nationality)
+
+            yield country
+
+        # Gets footballer info.
+        footballer = items.Footballer(self.get_footballer_info(response))
+        # footballer['country'] = country['name']
+        footballer['club'] = meta.get('club', settings.DEFAULT_NA)
+
+        yield footballer
 
 
     ###############################################
@@ -56,9 +117,11 @@ class TransfermarktSpider(scrapy.Spider):
         selector = scrapy.selector.Selector(response)
 
         country = {
-            u'name': self.get_country_name(selector),
             u'flag_slug': self.get_country_flag(selector),
+            u'name': self.get_country_name(selector),
         }
+
+        country[u'tm_id'] = self.get_tm_id(country['flag_slug'])
 
         return country
 
@@ -68,20 +131,76 @@ class TransfermarktSpider(scrapy.Spider):
         selector = scrapy.selector.Selector(response)
 
         league = {
-            u'name': self.get_league_name(selector),
-            u'transfermarkt_slug': self.get_league_transfermartk_slug(response),
-            u'logo_slug': self.get_league_logo_slug(selector),
             u'country': u'', # Country is setted in parse function.
+            u'logo_slug': self.get_tm_logo_slug(selector),
+            u'name': self.get_tm_name(selector),
+            u'tm_slug': self.get_tm_url_slug(response),
         }
 
+        league[u'tm_id'] = self.get_tm_id(league['tm_slug'])
+
         return league
+
+
+    def get_club_info(self, response):
+
+        selector = scrapy.selector.Selector(response)
+
+        club = {
+            u'country': u'', # Country is setted in parse_club function.
+            u'league': u'', # League is setted in parse_club function.
+            u'logo_slug': self.get_tm_logo_slug(selector),
+            u'name': self.get_tm_name(selector),
+            u'seats_number': self.get_club_seats(selector),
+            u'stadium': self.get_club_stadium(selector),
+            u'tm_slug': self.get_tm_url_slug(response),
+        }
+
+        club[u'tm_id'] = self.get_tm_id(club[u'tm_slug'])
+
+        return club
+
+
+    def get_footballer_info(self, response):
+
+        selector = scrapy.selector.Selector(response)
+
+        footballer = {
+            u'arrived_date': self.get_footballer_personal_info(selector, 'since'),
+            u'birth_date': self.get_footballer_personal_info(selector, 'Date'),
+            u'birth_place': self.get_footballer_personal_info(selector, 'Place'),
+            u'photo_slug': self.get_tm_logo_slug(selector),
+            u'captain': self.get_footballer_is_captain(selector),
+            u'club': u'', # Club is setted in parse_footballer function.
+            u'contract_until': self.get_footballer_personal_info(selector, 'until'),
+            u'foot': self.get_footballer_personal_info(selector, 'Foot'),
+            u'full_name': self.get_footballer_personal_info(selector, 'ame'),
+            u'height': self.get_footballer_personal_info(selector, 'Height'),
+            # injury_info
+            # injury_return
+            u'main_position': self.get_footballer_position(selector, 'Main'),
+            u'name': self.get_tm_name(selector),
+            # nationalities
+            # new_arrival_from
+            # new_arrival_amount
+            u'number': self.get_footballer_number(selector),
+            u'secondary_positions': self.get_footballer_position(selector, 'Secondary'),
+            u'tm_slug': self.get_tm_url_slug(response),
+            u'value': self.get_footballer_value(selector),
+        }
+
+        footballer[u'tm_id'] = self.get_tm_id(footballer[u'tm_slug'])
+        if footballer[u'full_name'] is settings.DEFAULT_NA:
+            footballer[u'full_name'] = footballer['name']
+
+        return footballer
 
 
     ################################
     ## Utils to gets the items info.
     ################################
 
-    def build_transfermarkt_url(self, slug):
+    def build_tm_url(self, slug):
 
         hosted_url = u'%s/%s' % (settings.TM_HOST_NAME, slug)
         normalized_url = u'http://www.%s' % os.path.normpath(hosted_url)
@@ -93,7 +212,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         clean_string = string
 
-        characters = [u'\t', u'\n', u'  ']
+        characters = [u'\r', u'\t', u'\n', u'  ', u'\xa0']
         for one_character in characters:
             clean_string = clean_string.replace(one_character, u'')
 
@@ -102,6 +221,25 @@ class TransfermarktSpider(scrapy.Spider):
             clean_string = clean_string.replace(one_protected, u'\\%s' % one_protected)
 
         return clean_string
+
+
+    def get_club_seats(self, selector):
+
+        seats = selector.xpath('//table[@class="profilheader"]/tr/td/span[contains(text(), "Seats")]/text()').extract()
+
+        if seats:
+          seats_number = seats[0].split(' ')[0]
+        else:
+          seats_number = ''
+
+        return int(seats_number.replace('.','')) if seats_number else 0
+
+
+    def get_club_stadium(self, selector):
+
+        stadium = selector.xpath('//table[@class="profilheader"]/tr/td/a[contains(@href, "stadion")]/text()').extract()
+
+        return self.clean_string(stadium[0]) if stadium else settings.DEFAULT_NA
 
 
     def get_country_name(self, selector):
@@ -118,41 +256,130 @@ class TransfermarktSpider(scrapy.Spider):
         return self.clean_string(flag[0]) if flag else settings.DEFAULT_NA
 
 
-    def get_league_logo_slug(self, selector):
+    def get_footballer_is_captain(self, selector):
+
+        captain = selector.xpath('//div[contains(@class, "captain")]').extract()
+
+        return True if captain else False
+
+
+    def get_footballer_nationalities(self, selector):
+
+        countries = []
+
+        xpath = '//table[@class="auflistung"]/tr/th[contains(text(),"%s")]/../td/img/@title'
+        names = selector.xpath(xpath % 'Nationality').extract()
+
+        xpath = '//table[@class="auflistung"]/tr/th[contains(text(),"%s")]/../td/img/@src'
+        flags = selector.xpath(xpath % 'Nationality').extract()
+
+        for i in range(len(names)):
+            one_country = {
+                u'flag_slug': flags[i].replace('verysmall', 'small'),
+                u'name': names[i],
+            }
+
+            one_country[u'tm_id'] = self.get_tm_id(one_country['flag_slug'])
+
+            countries.append(one_country)
+
+        return countries
+
+    def get_footballer_number(self, selector):
+
+        number = selector.xpath('//div[@class="spielername-profil"]/text()').extract()
+
+        return self.clean_string(number[0]) if number else settings.DEFAULT_NA
+
+
+    def get_footballer_personal_info(self, selector, attribute):
+
+        if attribute in ['Date']:
+            extra_filter = '/a'
+        elif attribute in ['Place']:
+            extra_filter = '/span'
+        else:
+            extra_filter = ''
+
+        xpath = '//table[@class="auflistung"]/tr/th[contains(text(), "%s")]/../td%s/text()'
+        info = selector.xpath(xpath % (attribute, extra_filter)).extract()
+
+        return self.clean_string(info[0]) if info else settings.DEFAULT_NA
+
+
+    def get_footballer_position(self, selector, role):
+
+        xpath = '//table[@class="auflistung"]/tr/td/normal[contains(text(), "%s")]/../a/text()'
+        positions = selector.xpath(xpath % role).extract()
+
+        return ','.join(positions) if positions else settings.DEFAULT_NA
+
+
+    def get_footballer_value(self, selector):
+
+        xpath = '//div[contains(@class, "marktwert")]/span/a/text()'
+        value_info = selector.xpath(xpath).extract()
+        if value_info and value_info[0] and value_info[0] not in ['-']:
+            value = float(value_info[0].replace(',','.'))
+        else:
+            value = 0.0
+
+        xpath = '//div[contains(@class, "marktwert")]/span/a/span/text()'
+        base_info = selector.xpath(xpath).extract()
+        base = base_info[0] if base_info else ''
+
+        if 'Mill.' in base:
+            value = value * 1000 * 1000
+        elif 'Th.' in base:
+            value = value * 1000
+
+        return int(value)
+
+
+    def get_tm_id(self, base_url):
+
+      slug = '/saison_id'
+
+      if slug in base_url:
+          base_url = base_url.split(slug)[0]
+
+      item_id = base_url.split('/')[-1]
+
+      return item_id.split('.')[0]
+
+
+    def get_tm_logo_slug(self, selector):
 
         logo = selector.xpath('//div[@class="headerfoto"]/img/@src').extract()
 
         return self.clean_string(logo[0]) if logo else settings.DEFAULT_NA
 
 
-    def get_league_name(self, selector):
+    def get_tm_name(self, selector):
 
         name = selector.xpath('//div[@class="spielername-profil"]/text()').extract()
 
         return self.clean_string(name[0]) if name else settings.DEFAULT_NA
 
 
-    def get_league_transfermartk_slug(self, response):
+    def get_tm_url_slug(self, response):
 
-        url = response.url
+        url = unicode(response.url)
 
         return url.split(settings.TM_HOST_NAME)[-1] if url else settings.DEFAULT_NA
 
 
-    def get_clubs_links(self, response):
+    def get_tm_links(self, response):
 
-        clubs = []
+        links = []
         selector = scrapy.selector.Selector(response)
 
         table = selector.xpath(u'//div[@id="yw1"]/table/tbody/tr')
         for one_row in table:
 
-            td_element = one_row.xpath('.//td')
+            one_link = one_row.xpath('.//td[contains(@class, "hauptlink")]/a/@href').extract()
 
-            if td_element:
-                team_link = td_element[0].xpath('.//a/@href').extract()
+            if one_link:
+                links.extend(one_link)
 
-                if team_link:
-                    clubs.extend(team_link)
-
-        return clubs
+        return links

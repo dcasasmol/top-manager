@@ -15,26 +15,50 @@ from scrapy import Item, Field
 #     django_model = Footballer
 
 class Country(Item):
-    name = Field()
     flag_slug = Field()
+    name = Field()
+    tm_id = Field()
 
 
 class League(Item):
-    name = Field()
-    transfermarkt_slug = Field()
-    logo_slug = Field()
     country = Field()
+    logo_slug = Field()
+    name = Field()
+    tm_id = Field()
+    tm_slug = Field()
 
 
 class Club(Item):
-    name = Field()
-    transfermarkt_slug = Field()
-    logo_slug = Field()
     country = Field()
     league = Field()
-    stadium = Field()
+    logo_slug = Field()
+    name = Field()
     seats_number = Field()
+    stadium = Field()
+    tm_id = Field()
+    tm_slug = Field()
 
 
 class Footballer(Item):
-    pass
+    arrived_date = Field()
+    birth_date = Field()
+    birth_place = Field()
+    photo_slug = Field()
+    captain = Field()
+    club = Field()
+    contract_until = Field()
+    foot = Field()
+    full_name = Field()
+    height = Field()
+    injury_info = Field()
+    injury_return = Field()
+    main_position = Field()
+    name = Field()
+    nationalities = Field()
+    new_arrival_from = Field()
+    new_arrival_amount = Field()
+    number = Field()
+    secondary_positions = Field()
+    tm_id = Field()
+    tm_slug = Field()
+    value = Field()
