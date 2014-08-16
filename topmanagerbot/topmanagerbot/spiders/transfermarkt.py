@@ -2,18 +2,13 @@
 # topmanagerbot/spiders/transfermarkt.py
 
 #TODO
-# get all footballer info
 # pedir confirmacion de los cambios raros
 # delete duplicates
-# manage cesions
 # saves items in django database
-# info counters
-# not save league/club by name, do it by id
 # not save url image, download it and save it
 
 import os
 import scrapy
-from scrapy.xlib.pydispatch import dispatcher
 
 from topmanagerbot import settings
 from topmanagerbot import items
@@ -25,7 +20,13 @@ class TransfermarktSpider(scrapy.Spider):
     allowed_domains = [ settings.TM_HOST_NAME ]
     start_urls = ()
     counters = {
-        'item': [],
+        'countries_processed': 0,
+        'leagues_processed': 0,
+        'clubs_processed': 0,
+        'footballers_processed': 0,
+        'injuried_players': 0, #TODO
+        'loans': 0, #TODO
+        'new_arrivals': 0, #TODO
     }
 
 
@@ -50,7 +51,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         # Gets league info.
         league = items.League(self.get_league_info(response))
-        league['country'] = country['name']
+        league['country'] = country['tm_id']
 
         yield league
 
@@ -58,7 +59,7 @@ class TransfermarktSpider(scrapy.Spider):
         clubs_links = self.get_tm_links(response)
 
         meta = {
-            'league': league['name'],
+            'league': league['tm_id'],
         }
 
         for one_club in clubs_links:
@@ -78,7 +79,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         # Gets club info.
         club = items.Club(self.get_club_info(response))
-        club['country'] = country['name']
+        club['country'] = country['tm_id']
         club['league'] = meta.get('league', settings.DEFAULT_NA)
 
         yield club
@@ -87,7 +88,7 @@ class TransfermarktSpider(scrapy.Spider):
         footballers_links = self.get_tm_links(response)
 
         meta = {
-            'club': club['name'],
+            'club': club['tm_id'],
         }
 
         for one_footballer in footballers_links:
@@ -105,7 +106,7 @@ class TransfermarktSpider(scrapy.Spider):
         nationalities = self.get_footballer_nationalities(response)
         for one_nationality in nationalities:
             country = items.Country(one_nationality)
-            countries.append(one_nationality['name'])
+            countries.append(one_nationality['tm_id'])
 
             yield country
 
@@ -129,6 +130,7 @@ class TransfermarktSpider(scrapy.Spider):
             u'name': self.get_country_name(selector),
         }
 
+        # Sets tm_id.
         country[u'tm_id'] = self.get_tm_id(country['flag_slug'])
 
         return country
@@ -145,6 +147,7 @@ class TransfermarktSpider(scrapy.Spider):
             u'tm_slug': self.get_tm_url_slug(response),
         }
 
+        # Sets tm_id.
         league[u'tm_id'] = self.get_tm_id(league['tm_slug'])
 
         return league
@@ -164,6 +167,7 @@ class TransfermarktSpider(scrapy.Spider):
             u'tm_slug': self.get_tm_url_slug(response),
         }
 
+        # Sets tm_id.
         club[u'tm_id'] = self.get_tm_id(club[u'tm_slug'])
 
         return club
@@ -184,8 +188,6 @@ class TransfermarktSpider(scrapy.Spider):
             u'foot': self.get_footballer_personal_info(selector, 'Foot'),
             u'full_name': self.get_footballer_personal_info(selector, 'ame'),
             u'height': self.get_footballer_personal_info(selector, 'Height'),
-            # injury_info
-            # injury_return
             u'main_position': self.get_footballer_position(selector, 'Main'),
             u'name': self.get_tm_name(selector),
             u'nationalities': u'', # Nationalities is setted in parse_footballer function.
@@ -195,21 +197,22 @@ class TransfermarktSpider(scrapy.Spider):
             u'value': self.get_footballer_value(selector),
         }
 
+        # Sets tm_id.
         footballer[u'tm_id'] = self.get_tm_id(footballer[u'tm_slug'])
+
+        # If does not have full_name, sets name as full_name.
         if footballer[u'full_name'] is settings.DEFAULT_NA:
             footballer[u'full_name'] = footballer['name']
 
+        # Sets arrival info.
         new_arrival = self.get_footballer_is_arrived(selector)
         footballer['new_arrival_from'] = new_arrival['from_team']
         footballer['new_arrival_amount'] = new_arrival['amount']
 
-        if new_arrival['source']:
-            self.counters['item'].append({
-                'name': footballer['name'],
-                'from': new_arrival['from_team'],
-                'amount': new_arrival['amount'],
-                'source': new_arrival['source'],
-            })
+        # Sets injury info.
+        injury = self.get_footballer_injury(selector)
+        footballer['injury_info'] = injury['info']
+        footballer['injury_return'] = injury['return']
 
         return footballer
 
@@ -274,6 +277,22 @@ class TransfermarktSpider(scrapy.Spider):
         return self.clean_string(flag[0]) if flag else settings.DEFAULT_NA
 
 
+    def get_footballer_injury(self, selector):
+
+        xpath = '//div[@class="verletzungsbox"]/div[@class="text"]/span/text()'
+        end = selector.xpath(xpath).extract()
+
+        xpath = '//div[@class="verletzungsbox"]/div[@class="text"]/text()'
+        info = selector.xpath(xpath).extract()
+
+        injury_info = {
+            'info': self.clean_string(info[0]) if info else settings.DEFAULT_NA,
+            'return': self.clean_string(end[0]) if end else settings.DEFAULT_NA,
+        }
+
+        return injury_info
+
+
     def get_footballer_is_captain(self, selector):
 
         captain = selector.xpath('//div[contains(@class, "captain")]').extract()
@@ -291,6 +310,7 @@ class TransfermarktSpider(scrapy.Spider):
         xpath = '//table[@class="auflistung"]/tr/th[contains(text(),"%s")]/../td/img/@src'
         flags = selector.xpath(xpath % 'Nationality').extract()
 
+        # A footballer can have several nationalities.
         for i in range(len(names)):
             one_country = {
                 u'flag_slug': flags[i].replace('verysmall', 'small'),
@@ -306,14 +326,17 @@ class TransfermarktSpider(scrapy.Spider):
 
     def get_footballer_is_arrived(self, selector):
 
+        # Gets older team id.
         xpath = '//div[contains(@class,"special-info")]/a/div[@class="neuzugang"]/../@%s'
         from_team = selector.xpath(xpath % 'href').extract()
         from_id = self.get_tm_id(from_team[0]) if from_team else u''
 
+        # Gets amount info.
         arrived_info = selector.xpath(xpath % 'title').extract()
         amount_info = arrived_info[0].split(':')[-1] if arrived_info else u''
         amount = None
 
+        # Processes amount info to get amount.
         if from_id and arrived_info:
             info_splitted = amount_info.split(' ')
             for item in info_splitted:
@@ -332,16 +355,17 @@ class TransfermarktSpider(scrapy.Spider):
                 else:
                     pass
 
+        # Gets loan info.
         xpath = '//div[contains(@class,"special-info")]/a/div[@class="ausgeliehen"]'
         loan_info = selector.xpath(xpath).extract()
 
+        # If the footballer is loaned, sets amount to 'loan'.
         if loan_info:
             amount = 'loan'
 
         arrived = {
             'from_team': from_id,
             'amount': amount,
-            'source': arrived_info,
         }
 
         return arrived
@@ -379,17 +403,22 @@ class TransfermarktSpider(scrapy.Spider):
 
     def get_footballer_value(self, selector):
 
+        # Gets value info.
         xpath = '//div[contains(@class, "marktwert")]/span/a/text()'
         value_info = selector.xpath(xpath).extract()
+
+        # Processes value info to gets a float.
         if value_info and value_info[0] and value_info[0] not in ['-']:
             value = float(value_info[0].replace(',','.'))
         else:
             value = 0.0
 
+        # Gets base info.
         xpath = '//div[contains(@class, "marktwert")]/span/a/span/text()'
         base_info = selector.xpath(xpath).extract()
         base = base_info[0] if base_info else ''
 
+        # Gets the real value processing base info.
         if 'Mill.' in base:
             value = value * 1000 * 1000
         elif 'Th.' in base:

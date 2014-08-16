@@ -24,18 +24,18 @@ class TopmanagerbotPipeline(object):
             return self.storeLeague(item, spider)
 
 
-    def storeClub(self, item, spider):
-        pass
-        # return item
+    def storeFootballer(self, item, spider):
+        spider.counters['footballers_processed'] += 1
+        return item
 
     def storeCountry(self, item, spider):
-        pass
-        # return item
+        spider.counters['countries_processed'] += 1
+        return item
 
-    def storeFootballer(self, item, spider):
-        pass
-        # return item
+    def storeClub(self, item, spider):
+        spider.counters['clubs_processed'] += 1
+        return item
 
     def storeLeague(self, item, spider):
-        pass
-        # return item
+        spider.counters['leagues_processed'] += 1
+        return item
