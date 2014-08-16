@@ -25,13 +25,17 @@ class TopmanagerbotPipeline(object):
 
 
     def storeClub(self, item, spider):
-        return item
+        pass
+        # return item
 
     def storeCountry(self, item, spider):
-        return item
+        pass
+        # return item
 
     def storeFootballer(self, item, spider):
-        return item
+        pass
+        # return item
 
     def storeLeague(self, item, spider):
-        return item
+        pass
+        # return item

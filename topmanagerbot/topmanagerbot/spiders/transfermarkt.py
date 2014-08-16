@@ -13,6 +13,7 @@
 
 import os
 import scrapy
+from scrapy.xlib.pydispatch import dispatcher
 
 from topmanagerbot import settings
 from topmanagerbot import items
@@ -23,6 +24,9 @@ class TransfermarktSpider(scrapy.Spider):
     name = u'transfermarkt'
     allowed_domains = [ settings.TM_HOST_NAME ]
     start_urls = ()
+    counters = {
+        'item': [],
+    }
 
 
     def __init__(self):
@@ -32,6 +36,8 @@ class TransfermarktSpider(scrapy.Spider):
             league_url = self.build_tm_url(one_league)
             self.start_urls = self.start_urls + ( league_url, )
 
+        dispatcher = scrapy.xlib.pydispatch.dispatcher
+        dispatcher.connect(self.spider_closed, scrapy.signals.spider_closed)
         super(TransfermarktSpider, self).__init__()
 
 
@@ -94,17 +100,19 @@ class TransfermarktSpider(scrapy.Spider):
 
         meta = response.meta
 
-        # Gets country info.
+        # Gets nationality info.
+        countries = []
         nationalities = self.get_footballer_nationalities(response)
         for one_nationality in nationalities:
             country = items.Country(one_nationality)
+            countries.append(one_nationality['name'])
 
             yield country
 
         # Gets footballer info.
         footballer = items.Footballer(self.get_footballer_info(response))
-        # footballer['country'] = country['name']
         footballer['club'] = meta.get('club', settings.DEFAULT_NA)
+        footballer['nationalities'] = ','.join(countries)
 
         yield footballer
 
@@ -180,9 +188,7 @@ class TransfermarktSpider(scrapy.Spider):
             # injury_return
             u'main_position': self.get_footballer_position(selector, 'Main'),
             u'name': self.get_tm_name(selector),
-            # nationalities
-            # new_arrival_from
-            # new_arrival_amount
+            u'nationalities': u'', # Nationalities is setted in parse_footballer function.
             u'number': self.get_footballer_number(selector),
             u'secondary_positions': self.get_footballer_position(selector, 'Secondary'),
             u'tm_slug': self.get_tm_url_slug(response),
@@ -192,6 +198,18 @@ class TransfermarktSpider(scrapy.Spider):
         footballer[u'tm_id'] = self.get_tm_id(footballer[u'tm_slug'])
         if footballer[u'full_name'] is settings.DEFAULT_NA:
             footballer[u'full_name'] = footballer['name']
+
+        new_arrival = self.get_footballer_is_arrived(selector)
+        footballer['new_arrival_from'] = new_arrival['from_team']
+        footballer['new_arrival_amount'] = new_arrival['amount']
+
+        if new_arrival['source']:
+            self.counters['item'].append({
+                'name': footballer['name'],
+                'from': new_arrival['from_team'],
+                'amount': new_arrival['amount'],
+                'source': new_arrival['source'],
+            })
 
         return footballer
 
@@ -284,6 +302,50 @@ class TransfermarktSpider(scrapy.Spider):
             countries.append(one_country)
 
         return countries
+
+
+    def get_footballer_is_arrived(self, selector):
+
+        xpath = '//div[contains(@class,"special-info")]/a/div[@class="neuzugang"]/../@%s'
+        from_team = selector.xpath(xpath % 'href').extract()
+        from_id = self.get_tm_id(from_team[0]) if from_team else u''
+
+        arrived_info = selector.xpath(xpath % 'title').extract()
+        amount_info = arrived_info[0].split(':')[-1] if arrived_info else u''
+        amount = None
+
+        if from_id and arrived_info:
+            info_splitted = amount_info.split(' ')
+            for item in info_splitted:
+                if item in [u'Mill.', u'Th.']:
+                    i = info_splitted.index(item)
+                    amount = float(info_splitted[i-1].replace(',','.'))
+                    amount = amount * 1000 * 1000 if item in [u'Mill.'] else amount * 1000
+                    amount = unicode(int(amount))
+                    break
+                elif item in [u'-', u'Free', u'Libre']:
+                    amount = 0
+                    break
+                elif item in ['?']:
+                    amount = None
+                    break
+                else:
+                    pass
+
+        xpath = '//div[contains(@class,"special-info")]/a/div[@class="ausgeliehen"]'
+        loan_info = selector.xpath(xpath).extract()
+
+        if loan_info:
+            amount = 'loan'
+
+        arrived = {
+            'from_team': from_id,
+            'amount': amount,
+            'source': arrived_info,
+        }
+
+        return arrived
+
 
     def get_footballer_number(self, selector):
 
@@ -383,3 +445,9 @@ class TransfermarktSpider(scrapy.Spider):
                 links.extend(one_link)
 
         return links
+
+
+    # Function that is executed before spider is closed.
+    def spider_closed(self, spider):
+
+        self.log(unicode(self.counters), level=scrapy.log.INFO)
