@@ -27,7 +27,8 @@ SPIDER_MODULES = ['topmanagerbot.spiders']
 NEWSPIDER_MODULE = 'topmanagerbot.spiders'
 
 ITEM_PIPELINES = {
-    'topmanagerbot.pipelines.TopmanagerbotPipeline': 100,
+    'topmanagerbot.pipelines.DuplicatesPipeline': 100,
+    'topmanagerbot.pipelines.ProcessPipeline': 200,
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

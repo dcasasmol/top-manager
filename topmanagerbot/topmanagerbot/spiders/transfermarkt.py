@@ -2,8 +2,9 @@
 # topmanagerbot/spiders/transfermarkt.py
 
 #TODO
+# revisar qué campos son obligatorios (N/A) y cuales son opcionales None
+# revisar injury_return
 # pedir confirmacion de los cambios raros
-# delete duplicates
 # saves items in django database
 # not save url image, download it and save it
 
@@ -20,10 +21,15 @@ class TransfermarktSpider(scrapy.Spider):
     allowed_domains = [ settings.TM_HOST_NAME ]
     start_urls = ()
     counters = {
+        'item': [],
         'countries_processed': 0,
         'leagues_processed': 0,
         'clubs_processed': 0,
         'footballers_processed': 0,
+        'countries_duplicated': 0,
+        'leagues_duplicated': 0,
+        'clubs_duplicated': 0,
+        'footballers_duplicated': 0,
         'injuried_players': 0, #TODO
         'loans': 0, #TODO
         'new_arrivals': 0, #TODO
@@ -214,6 +220,9 @@ class TransfermarktSpider(scrapy.Spider):
         footballer['injury_info'] = injury['info']
         footballer['injury_return'] = injury['return']
 
+        if injury['return']:
+            self.counters['item'].append(injury['return'])
+
         return footballer
 
 
@@ -286,8 +295,8 @@ class TransfermarktSpider(scrapy.Spider):
         info = selector.xpath(xpath).extract()
 
         injury_info = {
-            'info': self.clean_string(info[0]) if info else settings.DEFAULT_NA,
-            'return': self.clean_string(end[0]) if end else settings.DEFAULT_NA,
+            'info': self.clean_string(info[0]) if info else None,
+            'return': self.clean_string(end[0]) if end else None,
         }
 
         return injury_info
@@ -329,11 +338,11 @@ class TransfermarktSpider(scrapy.Spider):
         # Gets older team id.
         xpath = '//div[contains(@class,"special-info")]/a/div[@class="neuzugang"]/../@%s'
         from_team = selector.xpath(xpath % 'href').extract()
-        from_id = self.get_tm_id(from_team[0]) if from_team else u''
+        from_id = self.get_tm_id(from_team[0]) if from_team else None
 
         # Gets amount info.
         arrived_info = selector.xpath(xpath % 'title').extract()
-        amount_info = arrived_info[0].split(':')[-1] if arrived_info else u''
+        amount_info = arrived_info[0].split(':')[-1] if arrived_info else None
         amount = None
 
         # Processes amount info to get amount.
@@ -398,7 +407,7 @@ class TransfermarktSpider(scrapy.Spider):
         xpath = '//table[@class="auflistung"]/tr/td/normal[contains(text(), "%s")]/../a/text()'
         positions = selector.xpath(xpath % role).extract()
 
-        return ','.join(positions) if positions else settings.DEFAULT_NA
+        return ','.join(positions) if positions else None
 
 
     def get_footballer_value(self, selector):
