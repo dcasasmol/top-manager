@@ -385,7 +385,7 @@ class TransfermarktSpider(scrapy.Spider):
 
     def get_footballer_number(self, selector):
 
-        number = selector.xpath(u'//div[@class="spielername-profil"]/text()').extract()
+        number = selector.xpath(u'//div[@class="rueckennummer-profil"]/text()').extract()
 
         return self.clean_string(number[0]) if number else DEFAULT_NA
 
