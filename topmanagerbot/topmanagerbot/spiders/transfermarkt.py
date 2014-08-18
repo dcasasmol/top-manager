@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 # topmanagerbot/spiders/transfermarkt.py
 
-#TODO
-# revisar qué campos son obligatorios (N/A) y cuales son opcionales None
-# controlar cuando no hay foto
-# pedir confirmacion de los cambios raros
-# saves items in django database
-# not save url image, download it and save it
+# .:: TODO list::.
+# Email with report of suspicious changes.
+# Save items in Django database.
+# Download images, not save url.
+# Footballer without photo.
 
 import os
 import scrapy
 
 from topmanagerbot.settings import DEFAULT_NA, TM_HOST_NAME, TM_LEAGUES
-from topmanagerbot.items import Club, Country, Footballer, League
+from topmanagerbot.items import ClubItem, CountryItem, FootballerItem, LeagueItem
 
 
 class TransfermarktSpider(scrapy.Spider):
@@ -21,7 +20,6 @@ class TransfermarktSpider(scrapy.Spider):
     allowed_domains = [ TM_HOST_NAME ]
     start_urls = ()
     counters = {
-        u'item': [],
         u'countries_processed': 0,
         u'leagues_processed': 0,
         u'clubs_processed': 0,
@@ -30,9 +28,9 @@ class TransfermarktSpider(scrapy.Spider):
         u'leagues_duplicated': 0,
         u'clubs_duplicated': 0,
         u'footballers_duplicated': 0,
-        u'injuried_players': 0, #TODO
-        u'loans': 0, #TODO
-        u'new_arrivals': 0, #TODO
+        u'injuried_players': 0,
+        u'loans': 0,
+        u'new_arrivals': 0,
     }
 
 
@@ -51,12 +49,12 @@ class TransfermarktSpider(scrapy.Spider):
     def parse(self, response):
 
         # Gets country info.
-        country = Country(self.get_country_info(response))
+        country = CountryItem(self.get_country_info(response))
 
         yield country
 
         # Gets league info.
-        league = League(self.get_league_info(response))
+        league = LeagueItem(self.get_league_info(response))
         league[u'country'] = country[u'tm_id']
 
         yield league
@@ -79,12 +77,12 @@ class TransfermarktSpider(scrapy.Spider):
         meta = response.meta
 
         # Gets country info.
-        country = Country(self.get_country_info(response))
+        country = CountryItem(self.get_country_info(response))
 
         yield country
 
         # Gets club info.
-        club = Club(self.get_club_info(response))
+        club = ClubItem(self.get_club_info(response))
         club[u'country'] = country[u'tm_id']
         club[u'league'] = meta.get(u'league', DEFAULT_NA)
 
@@ -111,13 +109,13 @@ class TransfermarktSpider(scrapy.Spider):
         countries = []
         nationalities = self.get_footballer_nationalities(response)
         for one_nationality in nationalities:
-            country = Country(one_nationality)
+            country = CountryItem(one_nationality)
             countries.append(one_nationality[u'tm_id'])
 
             yield country
 
         # Gets footballer info.
-        footballer = Footballer(self.get_footballer_info(response))
+        footballer = FootballerItem(self.get_footballer_info(response))
         footballer[u'club'] = meta.get(u'club', DEFAULT_NA)
         footballer[u'nationalities'] = countries
 
@@ -219,8 +217,6 @@ class TransfermarktSpider(scrapy.Spider):
         injury = self.get_footballer_injury(selector)
         footballer[u'injury_info'] = injury[u'info']
         footballer[u'injury_return'] = injury[u'return']
-
-        # self.counters[u'item'].append(footballer[u'photo_slug'])
 
         return footballer
 

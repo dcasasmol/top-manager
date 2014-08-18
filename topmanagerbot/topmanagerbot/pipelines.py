@@ -6,7 +6,7 @@
 
 from scrapy.exceptions import DropItem
 
-from .items import Club, Country, Footballer, League
+from .items import ClubItem, CountryItem, FootballerItem, LeagueItem
 from .settings import DEFAULT_NA
 
 
@@ -14,16 +14,26 @@ class ProcessPipeline(object):
 
     def process_item(self, item, spider):
 
-        if isinstance(item, Footballer):
+        if isinstance(item, FootballerItem):
+
+            if item[u'injury_info']:
+                spider.counters[u'injuried_players'] += 1
+
+            if item[u'new_arrival_from']:
+                spider.counters[u'new_arrivals'] += 1
+
+            if item[u'new_arrival_amount'] == 'loan':
+                spider.counters[u'loans'] += 1
+
             return self.store_footballer(item, spider)
 
-        elif isinstance(item, Country):
+        elif isinstance(item, CountryItem):
             return self.store_country(item, spider)
 
-        elif isinstance(item, Club):
+        elif isinstance(item, ClubItem):
             return self.store_club(item, spider)
 
-        elif isinstance(item, League):
+        elif isinstance(item, LeagueItem):
             return self.store_league(item, spider)
 
     def store_footballer(self, item, spider):
@@ -56,16 +66,16 @@ class DuplicatesPipeline(object):
         if item[u'name'] == DEFAULT_NA:
             raise DropItem(u'Empty item found: %s' % item)
 
-        if isinstance(item, Footballer):
+        if isinstance(item, FootballerItem):
             return self.check_footballer_duplicated(item, spider)
 
-        elif isinstance(item, Country):
+        elif isinstance(item, CountryItem):
             return self.check_country_duplicated(item, spider)
 
-        elif isinstance(item, Club):
+        elif isinstance(item, ClubItem):
             return self.check_club_duplicated(item, spider)
 
-        elif isinstance(item, League):
+        elif isinstance(item, LeagueItem):
             return self.check_league_duplicated(item, spider)
 
     def check_league_duplicated(self, item, spider):
