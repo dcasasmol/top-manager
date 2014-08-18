@@ -3,6 +3,7 @@
 
 #TODO
 # revisar qué campos son obligatorios (N/A) y cuales son opcionales None
+# controlar cuando no hay foto
 # revisar injury_return
 # pedir confirmacion de los cambios raros
 # saves items in django database
@@ -220,8 +221,8 @@ class TransfermarktSpider(scrapy.Spider):
         footballer['injury_info'] = injury['info']
         footballer['injury_return'] = injury['return']
 
-        if injury['return']:
-            self.counters['item'].append(injury['return'])
+        # if injury['return']:
+            # self.counters['item'].append(injury['return')
 
         return footballer
 
