@@ -5,7 +5,7 @@ from django.db import models
 
 
 class BaseModel(models.Model):
-    '''This abstract class models the common attirbutes of a model.
+    '''This abstract class models the common attributes of a model.
 
     Attributes:
         id (int): BaseModel id.
@@ -30,6 +30,27 @@ class BaseModel(models.Model):
 
         '''
         abstract = True
+        ordering = ['name']
+
+
+class Country(BaseModel):
+    '''This class models a country.
+
+    Attributes:
+        tm_id (str): Country `transfermarkt` id.
+        flag (image): Country flag.
+
+    '''
+    tm_id = models.CharField(max_length=255)
+    flag = models.ImageField(upload_to='flags')
+
+    class Meta:
+        '''Country model metadata.
+
+        Attributes:
+            ordering (list of str): Fields to order by in queries.
+
+        '''
         ordering = ['name']
 
 
@@ -63,11 +84,6 @@ class Footballer(BaseModel):
     @injury_info
     @main_position
     @secondary_positions
-
-
-class Country(BaseModel):
-    tm_id = CharField
-    flag_slug = SlugField
 
 
 class Club(BaseModel):
