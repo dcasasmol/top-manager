@@ -114,6 +114,22 @@ class Club(BaseModel):
     # @total_value
 
 
+class Injury(BaseModel):
+    '''This class models an injury of a footballer.
+
+    Attributes:
+        description (str): Injury description.
+        duration (int): Injury duration (in weeks).
+
+    '''
+    description = models.CharField(max_length=255, blank=True, default='')
+    duration = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
+
+    # @end_date
+    # @is_expired
+    # @extend_injury(weeks)
+
+
 class Footballer(BaseModel):
     '''This class models a footballer.
 
@@ -215,22 +231,6 @@ class PlayingPosition(BaseModel):
     footballer = models.ForeignKey(Footballer, related_name='playing', related_query_name='playing')
     position = models.ForeignKey(Position, related_name='playing', related_query_name='playing')
     primary = models.BooleanField(default=False)
-
-
-class Injury(BaseModel):
-    '''This class models an injury of a footballer.
-
-    Attributes:
-        description (str): Injury description.
-        duration (int): Injury duration (in weeks).
-
-    '''
-    description = models.CharField(max_length=255, blank=True, default='')
-    duration = PositiveSmallIntegerField(blank=True, null=True, default=None)
-
-    # @end_date
-    # @is_expired
-    # @extend_injury(weeks)
 
 
 # Maybe a future functionality of top-manager.
