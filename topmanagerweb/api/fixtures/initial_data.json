@@ -1,0 +1,158 @@
+[
+    {
+        "model": "api.Position",
+        "pk": 1,
+        "fields": {
+            "name": "Goalkeeper",
+            "img": "positions/goalkeeper.png",
+            "short_name": "GK",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 2,
+        "fields": {
+            "name": "Right Back",
+            "img": "positions/right-back.png",
+            "short_name": "RB",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 3,
+        "fields": {
+            "name": "Left Back",
+            "img": "positions/left-back.png",
+            "short_name": "LB",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 4,
+        "fields": {
+            "name": "Centre Back",
+            "img": "positions/centre-back.png",
+            "short_name": "CB",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 5,
+        "fields": {
+            "name": "Defensive Midfield",
+            "img": "positions/defensive-midfield.png",
+            "short_name": "DM",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 6,
+        "fields": {
+            "name": "Right Midfield",
+            "img": "positions/right-midfield.png",
+            "short_name": "RM",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 7,
+        "fields": {
+            "name": "Left Midfield",
+            "img": "positions/left-midfield.png",
+            "short_name": "LM",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 8,
+        "fields": {
+            "name": "Central Midfield",
+            "img": "positions/central-midfield.png",
+            "short_name": "CM",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 9,
+        "fields": {
+            "name": "Attacking Midfield",
+            "img": "positions/attacking-midfield.png",
+            "short_name": "AM",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 10,
+        "fields": {
+            "name": "Right Wing",
+            "img": "positions/right-wing.png",
+            "short_name": "RW",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 11,
+        "fields": {
+            "name": "Left Wing",
+            "img": "positions/left-wing.png",
+            "short_name": "LW",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 12,
+        "fields": {
+            "name": "Secondary Striker",
+            "img": "positions/secondary-striker.png",
+            "short_name": "SS",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    },
+    {
+        "model": "api.Position",
+        "pk": 13,
+        "fields": {
+            "name": "Centre Forward",
+            "img": "positions/centre-forward.png",
+            "short_name": "CF",
+            "creation_date": "2014-08-01T00:00:00+00:00",
+            "last_update": "2014-08-01T00:00:00+00:00",
+            "is_active": true
+        }
+    }
+]
