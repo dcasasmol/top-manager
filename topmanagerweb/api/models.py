@@ -32,6 +32,15 @@ class BaseModel(models.Model):
         abstract = True
         ordering = ['name']
 
+    def __str__(self):
+        '''Displays a human-readable representation of the BaseModel object.
+
+        Returns:
+            str: Human-readable representation of the BaseModel object.
+
+        '''
+        return self.name
+
 
 class Country(BaseModel):
     '''This class models a country.
@@ -57,6 +66,15 @@ class Position(BaseModel):
     img = models.ImageField(upload_to='positions', default='positions/default-position.png')
     pitch_img = models.ImageField(upload_to='positions', default='positions/base-pitch.png')
     short_name = models.CharField(max_length=3)
+
+    class Meta:
+        '''Position model metadata.
+
+        Attributes:
+            ordering (list of str): Fields to order by in queries.
+
+        '''
+        ordering = ['id']
 
 
 class League(BaseModel):
