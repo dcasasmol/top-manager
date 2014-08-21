@@ -38,6 +38,11 @@ TEMPLATE_DEBUG = DEBUG
 ADMIN_NAME = 'David Casas'
 ADMIN_EMAIL = 'david.casasmolina@gmail.com'
 
+# Django admin user:
+# User: admin
+# Email: admin@top-manager.es
+# Password: aeR7aeth
+
 ADMINS = (
     (ADMIN_NAME, ADMIN_EMAIL),
 )

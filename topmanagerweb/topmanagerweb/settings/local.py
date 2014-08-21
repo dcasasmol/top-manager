@@ -31,11 +31,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #TODO config database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': normpath(join(DJANGO_ROOT, 'default.db')),
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'topmanager_dev',
+        'USER': 'topmanager',
+        'PASSWORD': 'sus3ieXi',
+        'HOST': 'localhost',
         'PORT': '',
     }
 }
