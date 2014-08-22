@@ -53,6 +53,15 @@ class Country(BaseModel):
     flag = models.ImageField(upload_to='flags', default='flags/default-flag.png')
     tm_id = models.CharField(max_length=255, unique=True)
 
+    class Meta:
+        '''Country model metadata.
+
+        Attributes:
+            verbose_name_plural (str): Plural name for the object.
+
+        '''
+        verbose_name_plural = 'countries'
+
 
 class Position(BaseModel):
     '''This class models a position on the pitch.
