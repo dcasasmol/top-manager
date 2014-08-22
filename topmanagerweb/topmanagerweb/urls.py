@@ -12,10 +12,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', TemplateView.as_view(template_name='base.html')),
-
-    # Examples:
-    # url(r'^$', 'topmanagerweb.views.home', name='home'),
-    # url(r'^topmanagerweb/', include('topmanagerweb.foo.urls')),
+    url(r'^api/', include('api.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
