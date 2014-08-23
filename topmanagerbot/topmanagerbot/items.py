@@ -1,54 +1,55 @@
 # -*- coding: utf-8 -*-
 # topmanagerbot/items.py
 
-from scrapy import Item, Field
+from api.models import Country, League, Club, Injury, Footballer, \
+    Nationality, PlayingPosition
+
+from scrapy import Field
+from scrapy.contrib.djangoitem import DjangoItem
 
 
-class CountryItem(Item):
-    flag_slug = Field()
-    name = Field()
-    tm_id = Field()
+class CountryItem(DjangoItem):
+    django_model = Country
+
+    # ImagesPipeline fields.
+    image_urls = Field()
+    images = Field()
 
 
-class LeagueItem(Item):
-    country = Field()
-    logo_slug = Field()
-    name = Field()
-    tm_id = Field()
-    tm_slug = Field()
+class LeagueItem(DjangoItem):
+    django_model = League
+
+    # ImagesPipeline fields.
+    image_urls = Field()
+    images = Field()
 
 
-class ClubItem(Item):
-    country = Field()
-    league = Field()
-    logo_slug = Field()
-    name = Field()
-    seats_number = Field()
-    stadium = Field()
-    tm_id = Field()
-    tm_slug = Field()
+class ClubItem(DjangoItem):
+    django_model = Club
+
+    # ImagesPipeline fields.
+    image_urls = Field()
+    images = Field()
 
 
-class FootballerItem(Item):
-    arrived_date = Field()
-    birth_date = Field()
-    birth_place = Field()
-    photo_slug = Field()
-    captain = Field()
-    club = Field()
-    contract_until = Field()
-    foot = Field()
-    full_name = Field()
-    height = Field()
-    injury_info = Field() #optional
-    injury_return = Field() #optional
+class FootballerItem(DjangoItem):
+    django_model = Footballer
+
+    # ImagesPipeline fields.
+    image_urls = Field()
+    images = Field()
+
+    # Django ForeignKey fields.
+    countries = Field()
+    injury_info = Field()
+    injury_return = Field()
     main_position = Field()
-    name = Field()
-    nationalities = Field()
-    new_arrival_from = Field() #optional
-    new_arrival_amount = Field() #optional
-    number = Field()
-    secondary_positions = Field() #optional
-    tm_id = Field()
-    tm_slug = Field()
-    value = Field()
+    secondary_positions = Field()
+
+
+class NationalityItem(DjangoItem):
+    django_model = Nationality
+
+
+class PlayingPositionItem(DjangoItem):
+    django_model = PlayingPosition
