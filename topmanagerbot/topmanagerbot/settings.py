@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
-
-# Scrapy settings for topmanagerbot project
-#
-# For simplicity, this file contains only the most important settings by
-# default. All the other settings are documented here:
-#
-#     http://doc.scrapy.org/en/latest/topics/settings.html
-#
+# topmanagerbot/settings.py
 
 import os
 import sys
@@ -37,7 +30,7 @@ USER_AGENT = u'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:31.0) Gecko/20100101 Fir
 
 ########## DJANGO CONFIGURATION
 # Setting up Django's project full path
-DJANGO_PROJECT_PATH = u'/home/dcasas/projects/top-manager.es/topmanagerweb'
+DJANGO_PROJECT_PATH = u'../topmanagerweb'
 sys.path.insert(0, DJANGO_PROJECT_PATH)
 
 # Setting up Django's settings module name. This module is located at:

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 # topmanagerbot/pipelines.py
 
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
-
 from scrapy.exceptions import DropItem
+
+from api.models import Position
 
 from .items import ClubItem, CountryItem, FootballerItem, LeagueItem
 from .settings import DEFAULT_NA
