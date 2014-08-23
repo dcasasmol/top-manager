@@ -3,6 +3,7 @@ bpython==0.13
 django-braces==1.4.0
 django-model-utils==2.0.3
 logutils==0.3.3
+mysql-python==1.2.5
 Pillow==2.5.3
 Scrapy==0.24.4
 South==0.8.4
