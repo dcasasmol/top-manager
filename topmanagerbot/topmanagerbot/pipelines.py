@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # topmanagerbot/pipelines.py
 
+import math
 import urllib
+import datetime
 
 from scrapy import Request
 from scrapy.exceptions import DropItem
@@ -9,7 +11,7 @@ from scrapy.contrib.pipeline.images import ImagesPipeline
 
 from api.models import Country, League, Club, Injury, Footballer, \
     Nationality, PlayingPosition, Position
-from .settings import DEFAULT_NA, DJANGO_PROJECT_PATH
+from .settings import DJANGO_PROJECT_PATH
 from .items import ClubItem, CountryItem, FootballerItem, LeagueItem, \
     NationalityItem, PlayingPositionItem
 
@@ -33,15 +35,58 @@ class ProcessPipeline(object):
     def process_footballer(self, item, spider):
         spider.counters[u'footballers_processed'] += 1
 
-        if item[u'injury_info']:
-            spider.counters[u'injuried_players'] += 1
-
         if item[u'new_arrival_from']:
             spider.counters[u'new_arrivals'] += 1
 
         if item[u'new_arrival_price'] == u'loan':
             spider.counters[u'loans'] += 1
 
+        try:
+            footballer = Footballer.objects.get(tm_id=item[u'tm_id'])
+
+        except Footballer.DoesNotExist:
+            footballer = FootballerItem(dict(item))
+
+            # Sets footballer photo.
+            if item[u'images']:
+                footballer[u'photo'] = item[u'images'][0][u'path']
+            else:
+                footballer[u'photo'] = u''
+
+            # Processes footballer fields.
+            footballer[u'arrived_date'] = self.parse_date(item[u'arrived_date'])
+            footballer[u'birth_date'] = self.parse_date(item[u'birth_date'])
+            footballer[u'contract_until'] = self.parse_date(item[u'contract_until'])
+            # footballer[u'height'] # TODO to float
+            # footballer[u'foot'] # TODO to Footballer.FOOT_CHOICES
+            # footballer[u'new_arrival_from'] # TODO to Club
+            # footballer[u'new_arrival_price'] # TODO to int
+            # footballer[u'number'] # TODO to str (None if u'')
+
+            # Sets footballer club object.
+            footballer[u'club'] = self.get_club_object(item[u'club'])
+
+            # Saves footballer nationalities.
+            # TODO
+
+            # Saves footballer playing positions.
+            # TODO
+
+            # Saves footballer injury if exists.
+            if item[u'injury_info']:
+                injury = Injury(name=footballer[u'name'])
+                injury.description = item[u'injury_info']
+                injury.duration = self.get_injury_duration(item[u'injury_return'])
+
+                spider.counters[u'injuried_players'] += 1
+
+        print("============")
+        print("============")
+        print("============")
+        print(footballer)
+        print("============")
+        print("============")
+        print("============")
         # return item
 
     def process_country(self, item, spider):
@@ -49,22 +94,98 @@ class ProcessPipeline(object):
         spider.counters[u'countries_processed'] += 1
 
         try:
-
             country = Country.objects.get(tm_id=item[u'tm_id'])
 
         except Country.DoesNotExist:
-
             country = CountryItem(dict(item))
+
+            # Sets country flag.
+            if item[u'images']:
+                country[u'flag'] = item[u'images'][0][u'path']
+            else:
+                country[u'flag'] = u''
 
         # return item
 
     def process_club(self, item, spider):
         spider.counters[u'clubs_processed'] += 1
+
+        try:
+            club = Club.objects.get(tm_id=item[u'tm_id'])
+
+        except Club.DoesNotExist:
+
+            club = ClubItem(dict(item))
+
+            # Sets club crest.
+            if item[u'images']:
+                club[u'crest'] = item[u'images'][0][u'path']
+            else:
+                club[u'crest'] = u''
+
+            # Sets club league and country objects.
+            club[u'country'] = self.get_country_object(item[u'country'])
+            club[u'league'] = self.get_league_object(item[u'league'])
+
         # return item
 
     def process_league(self, item, spider):
         spider.counters[u'leagues_processed'] += 1
+
+        try:
+            league = League.objects.get(tm_id=item[u'tm_id'])
+
+        except League.DoesNotExist:
+
+            league = LeagueItem(dict(item))
+
+            # Sets league logo.
+            if item[u'images']:
+                league[u'logo'] = item[u'images'][0][u'path']
+            else:
+                league[u'logo'] = u''
+
+            # Sets league country object.
+            league[u'country'] = self.get_country_object(item[u'country'])
+
         # return item
+
+    def get_country_object(self, country_id):
+        return Country.objects.filter(tm_id=country_id).first()
+
+    def get_league_object(self, league_id):
+        return League.objects.filter(tm_id=league_id).first()
+
+    def get_club_object(self, club_id):
+        return Club.objects.filter(tm_id=club_id).first()
+
+    def get_position_object(self, position_name):
+        return Position.objects.filter(name=position_name).first()
+
+    def get_injury_duration(self, return_str):
+        duration = None
+        return_date = self.parse_date(return_str)
+
+        if return_date:
+            # Gets the next weekend of the return date.
+            while return_date.weekday() != 5:
+                return_date += datetime.timedelta(days=1)
+
+            today = datetime.datetime.today().date()
+            timedelta = return_date - today
+            duration = int(math.floor(timedelta.days / 7.0))
+
+        return duration
+
+    def parse_date(self, string):
+        if u'.' in string:
+            date = datetime.datetime.strptime(string, u'%d.%m.%Y').date()
+        elif u',' in string:
+            date = datetime.datetime.strptime(string, u'%b %d, %Y').date()
+        else:
+            date = None
+
+        return date
 
 
 class DuplicatesPipeline(object):
@@ -77,7 +198,7 @@ class DuplicatesPipeline(object):
 
     def process_item(self, item, spider):
 
-        if item[u'name'] == DEFAULT_NA:
+        if not item[u'name']:
             raise DropItem(u'Empty item found: %s' % item)
 
         if isinstance(item, FootballerItem):

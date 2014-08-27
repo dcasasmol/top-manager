@@ -146,7 +146,7 @@ class Injury(BaseModel):
 
     Attributes:
         description (str): Injury description.
-        duration (int): Injury duration (in weeks).
+        duration (int, optional): Injury duration (in weeks).
 
     '''
     description = models.CharField(max_length=255, blank=True, default='')

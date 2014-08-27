@@ -8,7 +8,7 @@
 import os
 import scrapy
 
-from topmanagerbot.settings import DEFAULT_NA, TM_HOST_NAME, TM_LEAGUES
+from topmanagerbot.settings import TM_HOST_NAME, TM_LEAGUES
 from topmanagerbot.items import ClubItem, CountryItem, FootballerItem, LeagueItem
 
 
@@ -82,7 +82,7 @@ class TransfermarktSpider(scrapy.Spider):
         # Gets club info.
         club = ClubItem(self.get_club_info(response))
         club[u'country'] = country[u'tm_id']
-        club[u'league'] = meta.get(u'league', DEFAULT_NA)
+        club[u'league'] = meta.get(u'league', u'')
 
         yield club
 
@@ -115,7 +115,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         # Gets footballer info.
         footballer = FootballerItem(self.get_footballer_info(response))
-        footballer[u'club'] = meta.get(u'club', DEFAULT_NA)
+        footballer[u'club'] = meta.get(u'club', u'')
         footballer[u'countries'] = countries
 
         yield footballer
@@ -138,7 +138,7 @@ class TransfermarktSpider(scrapy.Spider):
         if country[u'image_urls']:
             country[u'tm_id'] = self.get_tm_id(country[u'image_urls'][0])
         else:
-            country[u'tm_id'] = DEFAULT_NA
+            country[u'tm_id'] = u''
 
         return country
 
@@ -211,7 +211,7 @@ class TransfermarktSpider(scrapy.Spider):
         footballer[u'tm_id'] = self.get_tm_id(footballer[u'tm_slug'])
 
         # If does not have full_name, sets name as full_name.
-        if footballer[u'full_name'] == DEFAULT_NA:
+        if not footballer[u'full_name']:
             footballer[u'full_name'] = footballer[u'name']
 
         # Sets arrival info.
@@ -270,24 +270,24 @@ class TransfermarktSpider(scrapy.Spider):
 
         stadium = selector.xpath(u'//table[@class="profilheader"]/tr/td/a[contains(@href, "stadion")]/text()').extract()
 
-        return self.clean_string(stadium[0]) if stadium else DEFAULT_NA
+        return self.clean_string(stadium[0]) if stadium else u''
 
 
     def get_country_name(self, selector):
 
         name = selector.xpath(u'//div[@class="flagge"]/a/img/@title').extract()
 
-        return self.clean_string(name[0]) if name else DEFAULT_NA
+        return self.clean_string(name[0]) if name else u''
 
 
     def get_country_flag_url(self, selector):
 
         flag_info = selector.xpath(u'//div[@class="flagge"]/a/img/@src').extract()
 
-        flag_url = self.clean_string(flag_info[0]) if flag_info else DEFAULT_NA
+        flag_url = self.clean_string(flag_info[0]) if flag_info else u''
 
         # If url is a relative url, builds an absolute url.
-        if not flag_url.startswith(u'http') and flag_url is not DEFAULT_NA:
+        if flag_url and not flag_url.startswith(u'http'):
             flag_url = self.build_tm_url(flag_url)
 
         # If the url is a default image, sets url to empty string.
@@ -358,7 +358,7 @@ class TransfermarktSpider(scrapy.Spider):
             if one_country[u'image_urls']:
                 one_country[u'image_urls'] = [ one_country[u'image_urls'] ]
             else:
-                one_country[u'image_url'] = []
+                one_country[u'image_urls'] = []
 
             countries.append(one_country)
 
@@ -416,7 +416,7 @@ class TransfermarktSpider(scrapy.Spider):
 
         number = selector.xpath(u'//div[@class="rueckennummer-profil"]/text()').extract()
 
-        return self.clean_string(number[0]) if number else DEFAULT_NA
+        return self.clean_string(number[0]) if number else u''
 
 
     def get_footballer_personal_info(self, selector, attribute):
@@ -431,7 +431,7 @@ class TransfermarktSpider(scrapy.Spider):
         xpath = u'//table[@class="auflistung"]/tr/th[contains(text(), "%s")]/../td%s/text()'
         info = selector.xpath(xpath % (attribute, extra_filter)).extract()
 
-        return self.clean_string(info[0]) if info else DEFAULT_NA
+        return self.clean_string(info[0]) if info else u''
 
 
     def get_footballer_position(self, selector, role):
@@ -484,10 +484,10 @@ class TransfermarktSpider(scrapy.Spider):
 
         logo_info = selector.xpath(u'//div[@class="headerfoto"]/img/@src').extract()
 
-        logo_url = self.clean_string(logo_info[0]) if logo_info else DEFAULT_NA
+        logo_url = self.clean_string(logo_info[0]) if logo_info else u''
 
         # If url is a relative url, builds an absolute url.
-        if not logo_url.startswith(u'http') and logo_url is not DEFAULT_NA:
+        if logo_url and not logo_url.startswith(u'http'):
             logo_url = self.build_tm_url(logo_url)
 
         # If the url is a default image, sets url to empty string.
@@ -501,14 +501,14 @@ class TransfermarktSpider(scrapy.Spider):
 
         name = selector.xpath(u'//div[@class="spielername-profil"]/text()').extract()
 
-        return self.clean_string(name[0]) if name else DEFAULT_NA
+        return self.clean_string(name[0]) if name else u''
 
 
     def get_tm_url_slug(self, response):
 
         url = unicode(response.url)
 
-        return url.split(TM_HOST_NAME)[-1] if url else DEFAULT_NA
+        return url.split(TM_HOST_NAME)[-1] if url else u''
 
 
     def get_tm_links(self, response):
