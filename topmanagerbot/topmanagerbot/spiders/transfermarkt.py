@@ -388,7 +388,7 @@ class TransfermarktSpider(scrapy.Spider):
                     amount = unicode(int(amount))
                     break
                 elif item in [u'-', u'Free', u'Libre']:
-                    amount = 0
+                    amount = u'0'
                     break
                 elif item in [u'?']:
                     amount = None

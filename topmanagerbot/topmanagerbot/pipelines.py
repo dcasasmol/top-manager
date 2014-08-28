@@ -33,13 +33,8 @@ class ProcessPipeline(object):
             return self.process_league(item, spider)
 
     def process_footballer(self, item, spider):
+
         spider.counters[u'footballers_processed'] += 1
-
-        if item[u'new_arrival_from']:
-            spider.counters[u'new_arrivals'] += 1
-
-        if item[u'new_arrival_price'] == u'loan':
-            spider.counters[u'loans'] += 1
 
         try:
             footballer = Footballer.objects.get(tm_id=item[u'tm_id'])
@@ -57,20 +52,59 @@ class ProcessPipeline(object):
             footballer[u'arrived_date'] = self.parse_date(item[u'arrived_date'])
             footballer[u'birth_date'] = self.parse_date(item[u'birth_date'])
             footballer[u'contract_until'] = self.parse_date(item[u'contract_until'])
-            # footballer[u'height'] # TODO to float
-            # footballer[u'foot'] # TODO to Footballer.FOOT_CHOICES
-            # footballer[u'new_arrival_from'] # TODO to Club
-            # footballer[u'new_arrival_price'] # TODO to int
-            # footballer[u'number'] # TODO to str (None if u'')
+            footballer[u'height'] = self.parse_height(item[u'height'])
+            footballer[u'foot'] = self.parse_foot(item[u'foot'])
+            footballer[u'number'] = item[u'number'] if item[u'number'] else None
 
             # Sets footballer club object.
             footballer[u'club'] = self.get_club_object(item[u'club'])
 
+            # Sets new arrival info if exists.
+            if item[u'new_arrival_from']:
+                footballer[u'new_arrival_from'] = self.get_club_object(item[u'new_arrival_from'])
+                spider.counters[u'new_arrivals'] += 1
+
+                if item[u'new_arrival_price'] == u'loan':
+                    footballer[u'new_arrival_price'] = 0
+                    spider.counters[u'loans'] += 1
+
+                elif item[u'new_arrival_price']:
+                    footballer[u'new_arrival_price'] = int(item[u'new_arrival_price'])
+
+                else:
+                    footballer[u'new_arrival_price'] = None
+
             # Saves footballer nationalities.
-            # TODO
+            # primary = True
+            # for one_country in item[u'countries']:
+            #     country = self.get_country_object(one_country)
+
+            #     nationality = Nationality(name=u'%s - %s' % (footballer[u'name'],
+            #                                                  country[u'name']))
+            #     nationality.country = country
+            #     nationality.footballer = footballer
+
+            #     if primary:
+            #         nationality.primary = primary
+            #         primary = False
 
             # Saves footballer playing positions.
-            # TODO
+            # for one_position in item[u'main_position']:
+            #     position = self.get_position_object(one_position)
+
+            #     playing_position = PlayingPosition(name=u'%s - %s' % (footballer[u'name'],
+            #                                                           position[u'name']))
+            #     playing_position.position = position
+            #     playing_position.footballer = footballer
+            #     playing_position.primary = True
+
+            # for one_position in item[u'secondary_positions']:
+            #     position = self.get_position_object(one_position)
+
+            #     playing_position = PlayingPosition(name=u'%s - %s' % (footballer[u'name'],
+            #                                                           position[u'name']))
+            #     playing_position.position = position
+            #     playing_position.footballer = footballer
 
             # Saves footballer injury if exists.
             if item[u'injury_info']:
@@ -108,6 +142,7 @@ class ProcessPipeline(object):
         # return item
 
     def process_club(self, item, spider):
+
         spider.counters[u'clubs_processed'] += 1
 
         try:
@@ -130,6 +165,7 @@ class ProcessPipeline(object):
         # return item
 
     def process_league(self, item, spider):
+
         spider.counters[u'leagues_processed'] += 1
 
         try:
@@ -151,18 +187,23 @@ class ProcessPipeline(object):
         # return item
 
     def get_country_object(self, country_id):
+
         return Country.objects.filter(tm_id=country_id).first()
 
     def get_league_object(self, league_id):
+
         return League.objects.filter(tm_id=league_id).first()
 
     def get_club_object(self, club_id):
+
         return Club.objects.filter(tm_id=club_id).first()
 
     def get_position_object(self, position_name):
+
         return Position.objects.filter(name=position_name).first()
 
     def get_injury_duration(self, return_str):
+
         duration = None
         return_date = self.parse_date(return_str)
 
@@ -178,6 +219,7 @@ class ProcessPipeline(object):
         return duration
 
     def parse_date(self, string):
+
         if u'.' in string:
             date = datetime.datetime.strptime(string, u'%d.%m.%Y').date()
         elif u',' in string:
@@ -186,6 +228,23 @@ class ProcessPipeline(object):
             date = None
 
         return date
+
+    def parse_foot(self, string):
+
+        if string.lower() == Footballer.RIGHT_HANDED:
+            foot = Footballer.RIGHT_HANDED
+        elif string.lower() == Footballer.LEFT_HANDED:
+            foot = Footballer.LEFT_HANDED
+        elif string.lower() == Footballer.AMBIDEXTROUS:
+            foot = Footballer.AMBIDEXTROUS
+        else:
+            foot = None
+
+        return foot
+
+    def parse_height(self, string):
+
+        return float(string.replace(u',', u'.').split(u' ')[0]) if string else None
 
 
 class DuplicatesPipeline(object):
