@@ -67,7 +67,7 @@ class TransfermarktSpider(scrapy.Spider):
         for one_club in clubs_links:
 
           club_url = self.build_tm_url(one_club)
-          yield scrapy.Request(url=club_url, meta=meta, callback=self.parse_club)
+          yield scrapy.Request(url=club_url, callback=self.parse_club, meta=meta)
 
 
     def parse_club(self, response):
@@ -97,7 +97,7 @@ class TransfermarktSpider(scrapy.Spider):
 
           if u'spieler' in one_footballer:
               footballer_url = self.build_tm_url(one_footballer)
-              yield scrapy.Request(url=footballer_url, meta=meta, callback=self.parse_footballer)
+              yield scrapy.Request(url=footballer_url, callback=self.parse_footballer, meta=meta)
 
 
     def parse_footballer(self, response):
@@ -251,7 +251,7 @@ class TransfermarktSpider(scrapy.Spider):
         for one_protected in characters_protected:
             clean_string = clean_string.replace(one_protected, u'\\%s' % one_protected)
 
-        return clean_string
+        return clean_string.encode(u'utf-8')
 
 
     def get_club_seats(self, selector):

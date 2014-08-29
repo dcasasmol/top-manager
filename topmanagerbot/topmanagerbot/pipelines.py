@@ -40,6 +40,7 @@ class ProcessPipeline(object):
             footballer = Footballer.objects.get(tm_id=item[u'tm_id'])
 
         except Footballer.DoesNotExist:
+
             footballer = FootballerItem(dict(item))
 
             # Sets footballer photo.
@@ -53,8 +54,10 @@ class ProcessPipeline(object):
             footballer[u'birth_date'] = self.parse_date(item[u'birth_date'])
             footballer[u'contract_until'] = self.parse_date(item[u'contract_until'])
             footballer[u'height'] = self.parse_height(item[u'height'])
-            footballer[u'foot'] = self.parse_foot(item[u'foot'])
-            footballer[u'number'] = item[u'number'] if item[u'number'] else None
+            footballer[u'number'] = item[u'number'] if item[u'number'] else u''
+
+            if item[u'foot']:
+                footballer[u'foot'] = self.parse_foot(item[u'foot'])
 
             # Sets footballer club object.
             footballer[u'club'] = self.get_club_object(item[u'club'])
@@ -74,54 +77,60 @@ class ProcessPipeline(object):
                 else:
                     footballer[u'new_arrival_price'] = None
 
-            # Saves footballer nationalities.
-            # primary = True
-            # for one_country in item[u'countries']:
-            #     country = self.get_country_object(one_country)
-
-            #     nationality = Nationality(name=u'%s - %s' % (footballer[u'name'],
-            #                                                  country[u'name']))
-            #     nationality.country = country
-            #     nationality.footballer = footballer
-
-            #     if primary:
-            #         nationality.primary = primary
-            #         primary = False
-
-            # Saves footballer playing positions.
-            # for one_position in item[u'main_position']:
-            #     position = self.get_position_object(one_position)
-
-            #     playing_position = PlayingPosition(name=u'%s - %s' % (footballer[u'name'],
-            #                                                           position[u'name']))
-            #     playing_position.position = position
-            #     playing_position.footballer = footballer
-            #     playing_position.primary = True
-
-            # for one_position in item[u'secondary_positions']:
-            #     position = self.get_position_object(one_position)
-
-            #     playing_position = PlayingPosition(name=u'%s - %s' % (footballer[u'name'],
-            #                                                           position[u'name']))
-            #     playing_position.position = position
-            #     playing_position.footballer = footballer
+            else:
+                footballer[u'new_arrival_from'] = None
+                footballer[u'new_arrival_price'] = None
 
             # Saves footballer injury if exists.
             if item[u'injury_info']:
                 injury = Injury(name=footballer[u'name'])
                 injury.description = item[u'injury_info']
                 injury.duration = self.get_injury_duration(item[u'injury_return'])
+                injury.save()
 
+                footballer[u'injury'] = injury
                 spider.counters[u'injuried_players'] += 1
 
-        print("============")
-        print("============")
-        print("============")
-        print(footballer)
-        print("============")
-        print("============")
-        print("============")
-        # return item
+            footballer.save()
+            footballer = self.get_footballer_object(footballer[u'tm_id'])
+
+            # Saves footballer nationalities.
+            primary = True
+            for one_country in item[u'countries']:
+                country = self.get_country_object(one_country)
+
+                nationality = Nationality(name=u'%s - %s' % (footballer.name,
+                                                             country.name))
+                nationality.country = country
+                nationality.footballer = footballer
+
+                if primary:
+                    nationality.primary = primary
+                    primary = False
+
+                nationality.save()
+
+            # Saves footballer playing positions.
+            for one_position in item[u'main_position']:
+                position = self.get_position_object(one_position)
+
+                playing_position = PlayingPosition(name=u'%s - %s' % (footballer.name,
+                                                                      position.name))
+                playing_position.position = position
+                playing_position.footballer = footballer
+                playing_position.primary = True
+                playing_position.save()
+
+            for one_position in item[u'secondary_positions']:
+                position = self.get_position_object(one_position)
+
+                playing_position = PlayingPosition(name=u'%s - %s' % (footballer.name,
+                                                                      position.name))
+                playing_position.position = position
+                playing_position.footballer = footballer
+                playing_position.save()
+
+        return item
 
     def process_country(self, item, spider):
 
@@ -139,7 +148,9 @@ class ProcessPipeline(object):
             else:
                 country[u'flag'] = u''
 
-        # return item
+            country.save()
+
+        return item
 
     def process_club(self, item, spider):
 
@@ -161,8 +172,9 @@ class ProcessPipeline(object):
             # Sets club league and country objects.
             club[u'country'] = self.get_country_object(item[u'country'])
             club[u'league'] = self.get_league_object(item[u'league'])
+            club.save()
 
-        # return item
+        return item
 
     def process_league(self, item, spider):
 
@@ -183,24 +195,32 @@ class ProcessPipeline(object):
 
             # Sets league country object.
             league[u'country'] = self.get_country_object(item[u'country'])
+            league.save()
 
-        # return item
-
-    def get_country_object(self, country_id):
-
-        return Country.objects.filter(tm_id=country_id).first()
-
-    def get_league_object(self, league_id):
-
-        return League.objects.filter(tm_id=league_id).first()
+        return item
 
     def get_club_object(self, club_id):
 
         return Club.objects.filter(tm_id=club_id).first()
 
+    def get_country_object(self, country_id):
+
+        return Country.objects.filter(tm_id=country_id).first()
+
+    def get_footballer_object(self, footballer_id):
+
+        return Footballer.objects.filter(tm_id=footballer_id).first()
+
+    def get_league_object(self, league_id):
+
+        return League.objects.filter(tm_id=league_id).first()
+
     def get_position_object(self, position_name):
 
-        return Position.objects.filter(name=position_name).first()
+        if position_name == u'Keeper':
+            position_name = u'Goalkeeper'
+
+        return Position.objects.filter(name=position_name.replace(u'-', u' ')).first()
 
     def get_injury_duration(self, return_str):
 
