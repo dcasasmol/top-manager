@@ -30,9 +30,9 @@ class BaseModel(models.Model):
 
         '''
         abstract = True
-        ordering = ['name']
+        ordering = [u'name']
 
-    def __str__(self):
+    def __unicode__(self):
         '''Displays a human-readable representation of the BaseModel object.
 
         Returns:
@@ -50,7 +50,7 @@ class Country(BaseModel):
         tm_id (str): Country `transfermarkt` id.
 
     '''
-    flag = models.ImageField(upload_to='flags', default='flags/default-flag.png')
+    flag = models.ImageField(upload_to=u'flags', default=u'flags/default-flag.png')
     tm_id = models.CharField(max_length=255, unique=True)
 
     class Meta:
@@ -60,7 +60,7 @@ class Country(BaseModel):
             verbose_name_plural (str): Plural name for the object.
 
         '''
-        verbose_name_plural = 'countries'
+        verbose_name_plural = u'countries'
 
 
 class Position(BaseModel):
@@ -72,8 +72,8 @@ class Position(BaseModel):
         short_name (str): Position short name.
 
     '''
-    img = models.ImageField(upload_to='positions', default='positions/default-position.png')
-    pitch_img = models.ImageField(upload_to='positions', default='positions/base-pitch.png')
+    img = models.ImageField(upload_to=u'positions', default=u'positions/default-position.png')
+    pitch_img = models.ImageField(upload_to=u'positions', default=u'positions/base-pitch.png')
     short_name = models.CharField(max_length=3)
 
     class Meta:
@@ -83,7 +83,7 @@ class Position(BaseModel):
             ordering (list of str): Fields to order by in queries.
 
         '''
-        ordering = ['id']
+        ordering = [u'id']
 
 
 class League(BaseModel):
@@ -96,8 +96,8 @@ class League(BaseModel):
         tm_slug (str): League `transfermarkt` slug.
 
     '''
-    country = models.ForeignKey(Country, related_name='leagues', related_query_name='league')
-    logo = models.ImageField(upload_to='leagues', default='leagues/default-logo.jpg')
+    country = models.ForeignKey(Country, related_name=u'leagues', related_query_name=u'league')
+    logo = models.ImageField(upload_to=u'leagues', default=u'leagues/default-logo.jpg')
     tm_id = models.CharField(max_length=255, unique=True)
     tm_slug = models.SlugField(max_length=255)
 
@@ -124,10 +124,10 @@ class Club(BaseModel):
         tm_slug (str): Club `transfermarkt` slug.
 
     '''
-    crest = models.ImageField(upload_to='clubs', default='clubs/default-crest.jpg')
-    country = models.ForeignKey(Country, related_name='clubs', related_query_name='club')
-    league = models.ForeignKey(League, related_name='leagues', related_query_name='league')
-    stadium = models.CharField(max_length=255, blank=True, default='')
+    crest = models.ImageField(upload_to=u'clubs', default=u'clubs/default-crest.jpg')
+    country = models.ForeignKey(Country, related_name=u'clubs', related_query_name=u'club')
+    league = models.ForeignKey(League, related_name=u'leagues', related_query_name=u'league')
+    stadium = models.CharField(max_length=255, blank=True, default=u'')
     seats = models.PositiveIntegerField(blank=True, null=True, default=None)
     tm_id = models.CharField(max_length=255, unique=True)
     tm_slug = models.SlugField(max_length=255)
@@ -149,7 +149,7 @@ class Injury(BaseModel):
         duration (int, optional): Injury duration (in weeks).
 
     '''
-    description = models.CharField(max_length=255, blank=True, default='')
+    description = models.CharField(max_length=255, blank=True, default=u'')
     duration = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
 
     # @end_date
@@ -187,9 +187,9 @@ class Footballer(BaseModel):
         value (int): Footballer value.
 
     '''
-    RIGHT_HANDED = 'right'
-    LEFT_HANDED = 'left'
-    AMBIDEXTROUS = 'both'
+    RIGHT_HANDED = u'right'
+    LEFT_HANDED = u'left'
+    AMBIDEXTROUS = u'both'
     FOOT_CHOICES = (
         (RIGHT_HANDED, RIGHT_HANDED.capitalize()),
         (LEFT_HANDED, LEFT_HANDED.capitalize()),
@@ -198,22 +198,22 @@ class Footballer(BaseModel):
 
     arrived_date = models.DateField(blank=True, null=True, default=None)
     birth_date = models.DateField(blank=True, null=True, default=None)
-    birth_place = models.CharField(max_length=255, blank=True, default='')
-    photo = models.ImageField(upload_to='footballers', default='footballers/default-photo.jpg')
+    birth_place = models.CharField(max_length=255, blank=True, default=u'')
+    photo = models.ImageField(upload_to=u'footballers', default=u'footballers/default-photo.jpg')
     captain = models.BooleanField(default=False)
-    club = models.ForeignKey(Club, blank=True, null=True, related_name='footballers', related_query_name='footballer')
+    club = models.ForeignKey(Club, blank=True, null=True, related_name=u'footballers', related_query_name=u'footballer')
     contract_until = models.DateField(blank=True, null=True, default=None)
     foot = models.CharField(max_length=255, choices=FOOT_CHOICES, default=None)
-    full_name = models.CharField(max_length=255, blank=True, default='') #TODO override save functions to set name here.
+    full_name = models.CharField(max_length=255, blank=True, default=u'') #TODO override save functions to set name here.
     height = models.FloatField(blank=True, null=True, default=None)
-    injury = models.OneToOneField(Injury, blank=True, null=True, related_name='footballer')
+    injury = models.OneToOneField(Injury, blank=True, null=True, related_name=u'footballer')
     # TODO Loan class will be implemented in web app.
     # loan = models.OneToOneField(Loan, blank=True, null=True, related_name='footballer')
-    nationalities = models.ManyToManyField(Country, through='Nationality', related_name='footballers', related_query_name='footballer')
-    new_arrival_from = models.ForeignKey(Club, blank=True, null=True, related_name='sales', related_query_name='sale')
+    nationalities = models.ManyToManyField(Country, through=u'Nationality', related_name=u'footballers', related_query_name=u'footballer')
+    new_arrival_from = models.ForeignKey(Club, blank=True, null=True, related_name=u'sales', related_query_name=u'sale')
     new_arrival_price = models.PositiveIntegerField(blank=True, null=True, default=None)
-    number = models.CharField(max_length=255, blank=True, default='')
-    positions = models.ManyToManyField(Position, through='PlayingPosition', related_name='footballers', related_query_name='footballer')
+    number = models.CharField(max_length=255, blank=True, default=u'')
+    positions = models.ManyToManyField(Position, through=u'PlayingPosition', related_name=u'footballers', related_query_name=u'footballer')
     tm_id = models.CharField(max_length=255, unique=True)
     tm_slug = models.SlugField(max_length=255)
     value = models.PositiveIntegerField(default=0)
@@ -239,8 +239,8 @@ class Nationality(BaseModel):
         primary (bool): If the nationality is primary or not, default False.
 
     '''
-    country = models.ForeignKey(Country, related_name='nationalizated', related_query_name='nationalizated')
-    footballer = models.ForeignKey(Footballer, related_name='nationalizated', related_query_name='nationalizated')
+    country = models.ForeignKey(Country, related_name=u'nationalizated', related_query_name=u'nationalizated')
+    footballer = models.ForeignKey(Footballer, related_name=u'nationalizated', related_query_name=u'nationalizated')
     primary = models.BooleanField(default=False)
 
 
@@ -255,8 +255,8 @@ class PlayingPosition(BaseModel):
         primary (bool): If the position is primary or not, default False.
 
     '''
-    footballer = models.ForeignKey(Footballer, related_name='playing', related_query_name='playing')
-    position = models.ForeignKey(Position, related_name='playing', related_query_name='playing')
+    footballer = models.ForeignKey(Footballer, related_name=u'playing', related_query_name=u'playing')
+    position = models.ForeignKey(Position, related_name=u'playing', related_query_name=u'playing')
     primary = models.BooleanField(default=False)
 
 
