@@ -232,8 +232,7 @@ class ProcessPipeline(object):
             while return_date.weekday() != 5:
                 return_date += datetime.timedelta(days=1)
 
-            today = datetime.datetime.today().date()
-            timedelta = return_date - today
+            timedelta = return_date - datetime.date.today()
             duration = int(math.floor(timedelta.days / 7.0))
 
         return duration

@@ -3,7 +3,6 @@
 
 # .:: TODO list::.
 # Email with report of suspicious changes.
-# Save items in Django database.
 
 import os
 import scrapy
