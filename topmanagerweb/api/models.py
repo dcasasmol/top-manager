@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # api/models.py
 
+import datetime
+
 from django.db import models
 
 
@@ -57,9 +59,11 @@ class Country(BaseModel):
         '''Country model metadata.
 
         Attributes:
+            ordering (list of str): Fields to order by in queries.
             verbose_name_plural (str): Plural name for the object.
 
         '''
+        ordering = [u'name']
         verbose_name_plural = u'countries'
 
 
@@ -101,14 +105,122 @@ class League(BaseModel):
     tm_id = models.CharField(max_length=255, unique=True)
     tm_slug = models.SlugField(max_length=255)
 
-    # @average_age
-    # @average_value
-    # @foreings_number
-    # @less_valious_player
-    # @most_valious_player
-    # @players_number
-    # @clubs_number
-    # @total_value
+    @property
+    def average_age(self):
+        '''Gets the average age of the league.
+
+        Returns:
+            int: Average age.
+
+        '''
+        sum_age = 0
+
+        for one_club in self.clubs.all():
+            sum_age += one_club.average_age
+
+        return int(round(sum_age / self.clubs_number))
+
+    @property
+    def average_value(self):
+        '''Gets the average value of the league.
+
+        Returns:
+            int: Average value.
+
+        '''
+        sum_value = 0
+
+        for one_club in self.clubs.all():
+            sum_value += one_club.total_value
+
+        return int(round(sum_value / self.footballers_number))
+
+    @property
+    def clubs_number(self):
+        '''Gets the clubs number on the league.
+
+        Returns:
+            int: Clubs number.
+
+        '''
+        return self.clubs.count()
+
+    @property
+    def footballers_number(self):
+        '''Gets the footballers number on the league.
+
+        Returns:
+            int: Footballers number.
+
+        '''
+        sum_value = 0
+
+        for one_club in self.clubs.all():
+            sum_value += one_club.footballers_number
+
+        return sum_value
+
+    @property
+    def foreigns_number(self):
+        '''Gets the foreigns number on the league.
+
+        Returns:
+            int: Foreigns number.
+
+        '''
+        foreigns_number = 0
+
+        for one_club in self.clubs.all():
+            foreigns_number += one_club.foreigns_number
+
+        return foreigns_number
+
+    @property
+    def less_valious_footballer(self):
+        '''Gets the less valious footballer of the league.
+
+        Returns:
+            Footballer: Less valious footballer.
+
+        '''
+        less = self.clubs.first().less_valious_footballer
+
+        for one_club in self.clubs.all():
+            if one_club.less_valious_footballer.value < less.value:
+                less = one_club.less_valious_footballer
+
+        return less
+
+    @property
+    def most_valious_footballer(self):
+        '''Gets the most valious footballer of the league.
+
+        Returns:
+            Footballer: Most valious footballer.
+
+        '''
+        most = self.clubs.first().most_valious_footballer
+
+        for one_club in self.clubs.all():
+            if one_club.most_valious_footballer.value > most.value:
+                most = one_club.most_valious_footballer
+
+        return most
+
+    @property
+    def total_value(self):
+        '''Gets the total value of the league.
+
+        Returns:
+            int: Total value.
+
+        '''
+        sum_value = 0
+
+        for one_club in self.clubs.all():
+            sum_value += one_club.total_value
+
+        return sum_value
 
 
 class Club(BaseModel):
@@ -126,19 +238,96 @@ class Club(BaseModel):
     '''
     crest = models.ImageField(upload_to=u'clubs', default=u'clubs/default-crest.jpg')
     country = models.ForeignKey(Country, related_name=u'clubs', related_query_name=u'club')
-    league = models.ForeignKey(League, related_name=u'leagues', related_query_name=u'league')
+    league = models.ForeignKey(League, related_name=u'clubs', related_query_name=u'club')
     stadium = models.CharField(max_length=255, blank=True, default=u'')
     seats = models.PositiveIntegerField(blank=True, null=True, default=None)
     tm_id = models.CharField(max_length=255, unique=True)
     tm_slug = models.SlugField(max_length=255)
 
-    # @average_value
-    # @average_age
-    # @foreings_number
-    # @players_number
-    # @less_valiuos_player
-    # @most_valious_player
-    # @total_value
+    @property
+    def average_value(self):
+        '''Gets the average value of the club.
+
+        Returns:
+            int: Average value.
+
+        '''
+        return int(round(self.footballers.aggregate(avg=models.Avg('value'))['avg']))
+
+    @property
+    def average_age(self):
+        '''Gets the average age of the club.
+
+        Returns:
+            int: Average age.
+
+        '''
+        sum_age = 0
+
+        for one_footballer in self.footballers.all():
+            sum_age += one_footballer.age
+
+        return int(round(sum_age / self.footballers.count()))
+
+    @property
+    def foreigns_number(self):
+        '''Gets the foreigns number on the club.
+
+        Returns:
+            int: Foreigns number.
+
+        '''
+        foreigns_number = 0
+
+        for one_footballer in self.footballers.all():
+            if not one_footballer.is_nationalitied(self.league.country, True):
+                foreigns_number += 1
+
+        return foreigns_number
+
+    @property
+    def footballers_number(self):
+        '''Gets the footballers number on the club.
+
+        Returns:
+            int: Footballers number.
+
+        '''
+        return self.footballers.count()
+
+    @property
+    def less_valious_footballer(self):
+        '''Gets the less valious footballer of the club.
+
+        Returns:
+            Footballer: Less valious footballer.
+
+        '''
+        min_value = self.footballers.aggregate(min=models.Min('value'))['min']
+
+        return self.footballers.filter(value=min_value).first()
+
+    @property
+    def most_valious_footballer(self):
+        '''Gets the most valious footballer of the club.
+
+        Returns:
+            Footballer: Most valious footballer.
+
+        '''
+        max_value = self.footballers.aggregate(max=models.Max('value'))['max']
+
+        return self.footballers.filter(value=max_value).first()
+
+    @property
+    def total_value(self):
+        '''Gets the total value of the club.
+
+        Returns:
+            int: Total value.
+
+        '''
+        return self.footballers.aggregate(sum=models.Sum('value'))['sum']
 
 
 class Injury(BaseModel):
@@ -152,9 +341,70 @@ class Injury(BaseModel):
     description = models.CharField(max_length=255, blank=True, default=u'')
     duration = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
 
-    # @end_date
-    # @is_expired
-    # @extend_injury(weeks)
+    class Meta:
+        '''Injury model metadata.
+
+        Attributes:
+            verbose_name_plural (str): Plural name for the object.
+
+        '''
+        verbose_name_plural = u'injuries'
+
+    def extend_injury(self, weeks):
+        '''Extend the injury duration.
+
+        Args:
+            weeks (int): Weeks number to extend.
+
+        Returns:
+            date: New return date.
+
+        '''
+        if weeks > 0:
+            self.duration += weeks
+            self.save()
+
+        return self.return_date
+
+    @property
+    def info(self):
+        '''Gets the injury info.
+
+        Returns:
+            str: Injury info.
+
+        '''
+        return self.description if self.description else u'Unknown'
+
+    @property
+    def is_expired(self):
+        '''Check if the injury is expired.
+
+        Returns:
+            bool: True if expired, False otherwise.
+
+        '''
+        return datetime.date.today() > self.return_date if self.return_date else False
+
+    @property
+    def return_date(self):
+        '''Gets the injury return date.
+
+        Returns:
+            date: Injury return date.
+
+        '''
+        if self.duration is None:
+            return_date = self.duration
+        else:
+            today = datetime.date.today()
+            return_date = today + datetime.timedelta(weeks = self.duration)
+
+            # Gets the next weekend of the return date.
+            while return_date.weekday() != 5:
+                return_date += datetime.timedelta(days=1)
+
+        return return_date
 
 
 class Footballer(BaseModel):
@@ -204,11 +454,9 @@ class Footballer(BaseModel):
     club = models.ForeignKey(Club, blank=True, null=True, related_name=u'footballers', related_query_name=u'footballer')
     contract_until = models.DateField(blank=True, null=True, default=None)
     foot = models.CharField(max_length=255, choices=FOOT_CHOICES, default=None)
-    full_name = models.CharField(max_length=255, blank=True, default=u'') #TODO override save functions to set name here.
+    full_name = models.CharField(max_length=255, blank=True, default=u'')
     height = models.FloatField(blank=True, null=True, default=None)
     injury = models.OneToOneField(Injury, blank=True, null=True, related_name=u'footballer')
-    # TODO Loan class will be implemented in web app.
-    # loan = models.OneToOneField(Loan, blank=True, null=True, related_name='footballer')
     nationalities = models.ManyToManyField(Country, through=u'Nationality', related_name=u'footballers', related_query_name=u'footballer')
     new_arrival_from = models.ForeignKey(Club, blank=True, null=True, related_name=u'sales', related_query_name=u'sale')
     new_arrival_price = models.PositiveIntegerField(blank=True, null=True, default=None)
@@ -218,14 +466,90 @@ class Footballer(BaseModel):
     tm_slug = models.SlugField(max_length=255)
     value = models.PositiveIntegerField(default=0)
 
-    # @age
-    # @is_loaned
-    # @is_injuried
-    # @is_nationalitied(Country, primary=False)
-    # @injury_info
-    # @main_position
-    # @secondary_positions
-    # @extend_contract(years)
+    @property
+    def age(self):
+        '''Gets the age of the footballer.
+
+        Returns:
+            int: Footballer's age.
+
+        '''
+        today = datetime.date.today()
+
+        return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+
+    @property
+    def is_injuried(self):
+        '''Checks if the user is injuried.
+
+        Returns:
+            bool: True if injuried, False otherwise.
+
+        '''
+        return True if self.injury else False
+
+    def is_nationalitied(self, country, primary=False):
+        '''Check if the user is nationalitied on the country.
+
+        Args:
+            country (Country): Country to check.
+            primary (bool, optional): If the nationalization must be primary.
+
+        Returns:
+            bool: True if nationalitied, False otherwise.
+
+        '''
+        return country in self.nationalities.all()
+
+    @property
+    def main_nationality(self):
+        '''Gets the main nationality of the footballer.
+
+        Returns:
+            Position: Main nationality.
+
+        '''
+        return self.nationalizated.filter(primary=True).first().country
+
+    @property
+    def main_position(self):
+        '''Gets the main position of the footballer.
+
+        Returns:
+            Position: Main position.
+
+        '''
+        return self.playing.filter(primary=True).first().position
+
+    def extend_contract(self, years):
+        '''Extend the contract of the footballer.
+
+        Args:
+            years (int): Years number to extend.
+
+        Returns:
+            date: New contract end date.
+
+        '''
+        if years > 0:
+            new_end_year = self.contract_until.year + years
+            self.contract_until = self.contract_until.replace(year = new_end_year)
+            self.save()
+
+        return self.contract_until
+
+    def save(self, *args, **kwargs):
+        '''Saves the Footballer object setting the full_name attribute.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        '''
+        if not self.id and not self.full_name:
+            self.full_name = self.name
+
+        super(Footballer, self).save(*args, **kwargs)
 
 
 class Nationality(BaseModel):
@@ -243,6 +567,29 @@ class Nationality(BaseModel):
     footballer = models.ForeignKey(Footballer, related_name=u'nationalizated', related_query_name=u'nationalizated')
     primary = models.BooleanField(default=False)
 
+    class Meta:
+        '''Nationality model metadata.
+
+        Attributes:
+            ordering (list of str): Fields to order by in queries.
+            verbose_name_plural (str): Plural name for the object.
+
+        '''
+        ordering = [u'name']
+        verbose_name_plural = u'nationalities'
+
+    def save(self, *args, **kwargs):
+        '''Saves the Nationality object setting the name attribute.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        '''
+        self.name = u'%s - %s' % (self.footballer.name, self.country.name)
+
+        super(Nationality, self).save(*args, **kwargs)
+
 
 class PlayingPosition(BaseModel):
     '''This class is an intermediate model between Footballer and Position.
@@ -258,6 +605,18 @@ class PlayingPosition(BaseModel):
     footballer = models.ForeignKey(Footballer, related_name=u'playing', related_query_name=u'playing')
     position = models.ForeignKey(Position, related_name=u'playing', related_query_name=u'playing')
     primary = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        '''Saves the PlayingPosition object setting the name attribute.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        '''
+        self.name = u'%s - %s' % (self.footballer.name, self.position.name)
+
+        super(PlayingPosition, self).save(*args, **kwargs)
 
 
 # Maybe a future functionality of top-manager.
