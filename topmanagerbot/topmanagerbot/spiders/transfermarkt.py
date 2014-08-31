@@ -5,6 +5,7 @@
 # Email with report of suspicious changes.
 
 import os
+import json
 import scrapy
 
 from topmanagerbot.settings import TM_HOST_NAME, TM_LEAGUES
@@ -17,15 +18,19 @@ class TransfermarktSpider(scrapy.Spider):
     allowed_domains = [ TM_HOST_NAME ]
     start_urls = ()
     counters = {
-        u'countries_processed': 0,
-        u'leagues_processed': 0,
-        u'clubs_processed': 0,
-        u'footballers_processed': 0,
-        u'countries_duplicated': 0,
-        u'leagues_duplicated': 0,
         u'clubs_duplicated': 0,
+        u'clubs_processed': 0,
+        u'clubs_saved': 0,
+        u'countries_duplicated': 0,
+        u'countries_processed': 0,
+        u'countries_saved': 0,
         u'footballers_duplicated': 0,
+        u'footballers_processed': 0,
+        u'footballers_saved': 0,
         u'injuried_players': 0,
+        u'leagues_duplicated': 0,
+        u'leagues_processed': 0,
+        u'leagues_saved': 0,
         u'loans': 0,
         u'new_arrivals': 0,
     }
@@ -529,4 +534,4 @@ class TransfermarktSpider(scrapy.Spider):
     # Function that is executed before spider is closed.
     def spider_closed(self, spider):
 
-        self.log(unicode(self.counters), level=scrapy.log.INFO)
+        self.log(unicode(json.dumps(self.counters, indent=4)), level=scrapy.log.INFO)

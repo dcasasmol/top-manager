@@ -93,6 +93,7 @@ class ProcessPipeline(object):
 
             footballer.save()
             footballer = self.get_footballer_object(footballer[u'tm_id'])
+            spider.counters[u'footballers_saved'] += 1
 
             # Saves footballer nationalities.
             primary = True
@@ -149,6 +150,7 @@ class ProcessPipeline(object):
                 country[u'flag'] = u''
 
             country.save()
+            spider.counters[u'countries_saved'] += 1
 
         return item
 
@@ -173,6 +175,7 @@ class ProcessPipeline(object):
             club[u'country'] = self.get_country_object(item[u'country'])
             club[u'league'] = self.get_league_object(item[u'league'])
             club.save()
+            spider.counters[u'clubs_saved'] += 1
 
         return item
 
@@ -196,6 +199,7 @@ class ProcessPipeline(object):
             # Sets league country object.
             league[u'country'] = self.get_country_object(item[u'country'])
             league.save()
+            spider.counters[u'leagues_saved'] += 1
 
         return item
 
