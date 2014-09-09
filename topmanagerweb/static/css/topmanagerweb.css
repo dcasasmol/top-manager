@@ -1,1 +1,32 @@
 /*! project specific CSS goes here. */
+
+
+/* ## Tables styles ## */
+.table thead > tr > th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table tbody > tr > td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+
+/* Footballer table styles */
+.cell-crest {
+    width: 30px;
+    height: 35px;
+}
+
+.cell-status {
+    font-size: 18px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+@media screen and (min-width: 900px) {
+    .pagination {
+        margin-top: 0;
+    }
+}

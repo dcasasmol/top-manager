@@ -1,0 +1,117 @@
+{# templates/footballer-list.html #}
+
+{% extends "base.html" %}
+
+{% load humanize %}
+{% load staticfiles %}
+{% load extrafilters %}
+
+
+{% block page_title %}Searcher{% endblock page_title %}
+{% block content %}
+
+<div class="row table-responsive panel panel-default">
+    <div class="panel-heading"><h3>Footballers</h3></div>
+    <div class="panel-body">
+    {% if is_paginated %}
+        <input type="search" class="form-control" id="filter" placeholder="Type here..."/>
+    {% else %}
+        <input type="search" class="form-control" id="filter" placeholder="Type here..."/>
+    {% endif %}
+    </div>
+    <table id="footballers-list" class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Club</th>
+                <th>Name</th>
+                <th>Positions</th>
+                <th>Value</th>
+                <th>Points</th>
+                <th>Owner</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody class="searchable">
+        {% for footballer in footballers %}
+            {% if footballer.is_injuried %}
+            <tr class="danger">
+            {% else %}
+            <tr>
+            {% endif %}
+                {% if is_paginated %}
+                <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                {% else %}
+                <td>{{ forloop.counter }}</td>
+                {% endif %}
+                <td><img class="cell-crest" src="{{ footballer.club.crest.url }}"/></td>
+                <td>{{ footballer.name }}</td>
+                <td>
+                    {% for position in footballer.positions.all %}
+                    <span>{{ position.short_name }}</span>
+                    {% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ footballer.value | intcomma }}</td>
+                <td>0</td>
+                <td>Computer</td>
+                <td>
+                {% if footballer.is_injuried %}
+                <span class="cell-status label label-danger" data-toogle="tooltip" data-placement="right" title="{{ footballer.injury.info }}">KO</span>
+                {% else %}
+                    <span class="cell-status label label-success">OK</span>
+                {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% if is_paginated %}
+<div>
+    <div class="pull-left">
+        <span>Showing {{ page_obj.start_index }} from {{ page_obj.end_index }} of {{ page_obj.paginator.count }} footballers with</span>
+        <span class="btn-group dropup">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                <span class="page-size">{{ page_obj.paginator.per_page }}</span>
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <li><a href="javascript:void(0)">10</a></li>
+                <li><a href="javascript:void(0)">25</a></li>
+                <li><a href="javascript:void(0)">50</a></li>
+                <li><a href="javascript:void(0)">100</a></li>
+            </ul>
+        </span>
+    <span>footballers per page</span>
+    </div>
+    <div>
+        <ul class="pagination pull-right">
+            {% if page_obj.has_previous %}
+            <li><a href="?page=1"><<</a></li>
+            <li><a href="?page={{ page_obj.previous_page_number }}"><</a></li>
+            {% endif %}
+
+            {% for i in page_obj.paginator.num_pages|visible2:page_obj.number %}
+            <li {% if page_obj.number == i %} class="active" {% endif %}><a href="?page={{i}}">{{i}}</a></li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}">></a></li>
+            <li><a href="?page={{ page_obj.paginator.num_pages }}">>></a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% endblock content %}
+
+
+{% block extra_js %}
+
+<script src="{% static 'js/topmanagerweb-tables.js' %}"></script>
+
+{% endblock extra_js %}

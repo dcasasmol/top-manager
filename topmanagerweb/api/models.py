@@ -521,6 +521,16 @@ class Footballer(BaseModel):
         '''
         return self.playing.filter(primary=True).first().position
 
+    @property
+    def secondary_positions(self):
+        '''Gets the secondary positions of the footballer.
+
+        Returns:
+            List of Position: Secondary positions.
+
+        '''
+        return self.positions.exclude(name=self.main_position.name)
+
     def extend_contract(self, years):
         '''Extend the contract of the footballer.
 
