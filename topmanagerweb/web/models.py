@@ -15,7 +15,7 @@ class Badge(BaseModel):
     pass
 
 
-class Bet(BaseModel):
+class Bid(BaseModel):
     #user = ForeignKey(User)
     #footballer = ForeignKey(Market) #NOTE revisar
     pass

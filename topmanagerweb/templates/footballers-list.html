@@ -30,6 +30,7 @@
                 <th>Points</th>
                 <th>Owner</th>
                 <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody class="searchable">
@@ -54,13 +55,18 @@
                 </td>
                 <td>{{ footballer.value | intcomma }}</td>
                 <td>0</td>
-                <td>Computer</td>
+                <td>Market</td>
                 <td>
                 {% if footballer.is_injuried %}
                 <span class="cell-status label label-danger" data-toogle="tooltip" data-placement="right" title="{{ footballer.injury.info }}">KO</span>
                 {% else %}
                     <span class="cell-status label label-success">OK</span>
                 {% endif %}
+                </td>
+                <td>
+                    <a href="/" class="btn btn-info" role="button">
+                        <span>Edit</span>
+                    </a>
                 </td>
             </tr>
         {% endfor %}
